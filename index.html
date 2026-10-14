@@ -121,6 +121,12 @@ legend{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);pa
 .range{display:flex;align-items:center;gap:10px}
 .range input{flex:1;accent-color:var(--accent);min-width:0}
 .range output{min-width:84px;text-align:left}
+.span2{grid-column:1/-1}
+.rate-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.rate-row input[type=number]{width:96px;font:inherit;font-family:var(--mono);font-size:18px;font-weight:500;padding:6px 10px;border:1.5px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--ink);text-align:center}
+.rate-row .seg{margin-inline-start:4px}
+.check{display:flex;align-items:flex-start;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;margin-top:4px}
+.check input{accent-color:var(--accent);width:18px;height:18px;margin:2px 0 0;flex:none}
 .tip{margin:0;font-size:14px;background:var(--level-soft);color:var(--ink);border-radius:10px;padding:10px 12px}
 .tip b{color:var(--level)}
 .warn{margin:0;font-size:14px;background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:10px 12px}
@@ -212,34 +218,48 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
     <section class="card" aria-label="הגדרות וידאו">
       <div class="card-h"><span class="chip-title t-green"><i>1</i>בחר איכות</span></div>
       <div class="presets" id="presets">
-        <div role="button" tabindex="0" class="preset" data-p="hd" aria-pressed="true"><b>וואטסאפ HD</b><span class="spec" dir="ltr">720p · 2 Mbps</span><span class="d">מאוזן. שלח עם HD בוואטסאפ</span></div>
-        <div role="button" tabindex="0" class="preset" data-p="lite" aria-pressed="false"><b>וואטסאפ קל</b><span class="spec" dir="ltr">480p · 0.9 Mbps</span><span class="d">קובץ קטן, לסרטונים ארוכים</span></div>
-        <div role="button" tabindex="0" class="preset" data-p="high" aria-pressed="false"><b>איכות גבוהה</b><span class="spec" dir="ltr">1080p · 5 Mbps</span><span class="d">לשליחה כקובץ או לשמירה</span></div>
-        <div role="button" tabindex="0" class="preset" data-p="size" aria-pressed="false"><b>לפי גודל קובץ</b><span class="spec" dir="ltr">720p · auto</span><span class="d">הקצב מחושב לפי האורך</span>
+        <div role="button" tabindex="0" class="preset" data-p="wa" aria-pressed="true"><b>וואטסאפ בלי טשטוש</b><span class="spec" dir="ltr">540p · 1500 kbps</span><span class="d">כמו האפליקציה שעבדה לך. נקודת התחלה מומלצת</span></div>
+        <div role="button" tabindex="0" class="preset" data-p="hd" aria-pressed="false"><b>וואטסאפ HD</b><span class="spec" dir="ltr">720p · 2000 kbps</span><span class="d">חד יותר, וואטסאפ עלול לכווץ שוב</span></div>
+        <div role="button" tabindex="0" class="preset" data-p="lite" aria-pressed="false"><b>קל במיוחד</b><span class="spec" dir="ltr">480p · 900 kbps</span><span class="d">לסרטונים ארוכים</span></div>
+        <div role="button" tabindex="0" class="preset" data-p="size" aria-pressed="false"><b>לפי גודל קובץ</b><span class="spec" dir="ltr">auto kbps</span><span class="d">הקצב מחושב לפי האורך</span>
           <span class="sizebox"><span>עד</span><input type="number" id="vTargetMB" min="2" max="500" step="1" value="16" inputmode="numeric" aria-label="גודל יעד במגה-בייט"><span>MB</span></span></div>
       </div>
 
-      <details class="adv" id="vAdv">
+      <details class="adv" id="vAdv" open>
         <summary>כוונון ידני</summary>
         <div class="grid2">
           <fieldset>
             <legend>רזולוציה (הצלע הקצרה)</legend>
             <div class="seg">
+              <label><input type="radio" name="vres" id="vres-360" value="360"><span>360p</span></label>
               <label><input type="radio" name="vres" id="vres-480" value="480"><span>480p</span></label>
+              <label><input type="radio" name="vres" id="vres-540" value="540"><span>540p</span></label>
               <label><input type="radio" name="vres" id="vres-720" value="720" checked><span>720p</span></label>
               <label><input type="radio" name="vres" id="vres-1080" value="1080"><span>1080p</span></label>
               <label><input type="radio" name="vres" id="vres-orig" value="orig"><span class="he">מקור</span></label>
             </div>
           </fieldset>
-          <fieldset id="vRateField">
-            <legend>קצב וידאו</legend>
-            <div class="range"><input type="range" id="vMbps" min="0.3" max="10" step="0.1" value="2" aria-label="קצב וידאו במגה-ביט לשנייה"><output id="vMbpsOut" class="mono" dir="ltr">2.0 Mbps</output></div>
+          <fieldset id="vRateField" class="span2">
+            <legend>ביט רייט כולל (וידאו + שמע)</legend>
+            <div class="rate-row">
+              <input type="number" id="vKbps" min="200" max="20000" step="10" value="1500" inputmode="numeric" aria-label="ביט רייט בקילוביט לשנייה">
+              <span class="mono">kbps</span>
+              <div class="seg" id="vKbpsQuick">
+                <label><input type="radio" name="vkq" id="vkq-1000" value="1000"><span>1000</span></label>
+                <label><input type="radio" name="vkq" id="vkq-1500" value="1500"><span>1500</span></label>
+                <label><input type="radio" name="vkq" id="vkq-2000" value="2000"><span>2000</span></label>
+                <label><input type="radio" name="vkq" id="vkq-3000" value="3000"><span>3000</span></label>
+              </div>
+            </div>
+            <div class="range"><input type="range" id="vKbpsRange" min="300" max="8000" step="10" value="1500" aria-label="ביט רייט"></div>
+            <label class="check"><input type="checkbox" id="vCbr"><span>קצב קבוע (CBR): הקובץ יוצא קרוב יותר למספר שבחרת</span></label>
           </fieldset>
           <fieldset>
             <legend>פריימים לשנייה</legend>
             <div class="seg">
               <label><input type="radio" name="vfps" id="vfps-24" value="24"><span>24</span></label>
               <label><input type="radio" name="vfps" id="vfps-30" value="30" checked><span>30</span></label>
+              <label><input type="radio" name="vfps" id="vfps-60" value="60"><span>60</span></label>
               <label><input type="radio" name="vfps" id="vfps-orig" value="orig"><span class="he">מקור</span></label>
             </div>
           </fieldset>
@@ -254,7 +274,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
           </fieldset>
         </div>
       </details>
-      <p class="tip"><b>טיפ:</b> בוואטסאפ לחץ על סמל ה-HD לפני השליחה. אם עדיין מטושטש, נסה קצב נמוך יותר. אם הקובץ גדול מדי, ירד ל-480p.</p>
+      <p class="tip"><b>איך מכיילים:</b> ליד כל סרטון מופיע הביט רייט של המקור ושל התוצאה. אם וואטסאפ עדיין מטשטש, הורד את הביט רייט ב-200–300, או ירד ברזולוציה, ונסה שוב. כשתמצא מספר שעובד, הוא יישמר לפעם הבאה.</p>
     </section>
 
     <section class="card">
@@ -401,20 +421,29 @@ function loadMB(){if(MB)return Promise.resolve(MB);if(!mbLoading)mbLoading=impor
 const canVideo=typeof window.VideoEncoder!=='undefined'&&typeof window.VideoDecoder!=='undefined';
 if(!canVideo)$('#vUnsupported').hidden=false;
 
-const PRESETS={hd:{res:720,mbps:2,fps:30},lite:{res:480,mbps:0.9,fps:30},high:{res:1080,mbps:5,fps:30},size:{res:720,mbps:null,fps:30}};
-const vs={preset:'hd',res:720,mbps:2,fps:30,audio:'keep',targetMB:16};
+const PRESETS={wa:{res:540,kbps:1500,fps:'orig'},hd:{res:720,kbps:2000,fps:30},lite:{res:480,kbps:900,fps:30},size:{res:720,kbps:null,fps:30}};
+const vs={preset:'wa',res:540,kbps:1500,fps:'orig',audio:'keep',targetMB:16,cbr:false};
+try{const saved=JSON.parse(localStorage.getItem('vset')||'null');if(saved&&typeof saved==='object')Object.assign(vs,saved);}catch(e){}
+function saveV(){try{localStorage.setItem('vset',JSON.stringify(vs));}catch(e){}}
 let vItems=[],vBusy=false;const vRows=new Map();
 
 function setRadio(name,val){const el=document.querySelector(`input[name=${name}][value="${val}"]`);if(el)el.checked=true;}
 function syncVControls(){
   document.querySelectorAll('.preset').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===vs.preset));
   setRadio('vres',vs.res);setRadio('vfps',vs.fps);setRadio('vaud',vs.audio);
-  $('#vMbps').value=vs.mbps;$('#vMbpsOut').textContent=vs.preset==='size'?'אוטומטי':(+vs.mbps).toFixed(1)+' Mbps';
-  $('#vMbps').disabled=vs.preset==='size';
+  const auto=vs.preset==='size';
+  if(document.activeElement!==$('#vKbps'))$('#vKbps').value=auto?'':vs.kbps;
+  $('#vKbps').placeholder=auto?'auto':'';
+  $('#vKbpsRange').value=vs.kbps;
+  document.querySelectorAll('input[name=vkq]').forEach(el=>el.checked=!auto&&+el.value===vs.kbps);
+  ['#vKbps','#vKbpsRange'].forEach(q=>$(q).disabled=auto);
+  document.querySelectorAll('input[name=vkq]').forEach(el=>el.disabled=auto);
+  $('#vCbr').checked=!!vs.cbr;
+  $('#vTargetMB').value=vs.targetMB;
 }
-function vChanged(){vItems.forEach(it=>{if(it.status==='done'){vDropOut(it);it.status='ready';}});vItems.forEach(vUpdateRow);vSum();}
+function vChanged(){saveV();vItems.forEach(it=>{if(it.status==='done'){vDropOut(it);it.status='ready';}});vItems.forEach(vUpdateRow);vSum();}
 function pickPreset(b){
-  const p=PRESETS[b.dataset.p];vs.preset=b.dataset.p;vs.res=p.res;vs.fps=p.fps;if(p.mbps)vs.mbps=p.mbps;
+  const p=PRESETS[b.dataset.p];vs.preset=b.dataset.p;vs.res=p.res;vs.fps=p.fps;if(p.kbps)vs.kbps=p.kbps;
   syncVControls();vChanged();
 }
 document.querySelectorAll('.preset').forEach(b=>{
@@ -427,7 +456,12 @@ function custom(){if(vs.preset!=='size')vs.preset='custom';syncVControls();vChan
 document.querySelectorAll('input[name=vres]').forEach(el=>el.addEventListener('change',()=>{vs.res=el.value==='orig'?'orig':+el.value;custom();}));
 document.querySelectorAll('input[name=vfps]').forEach(el=>el.addEventListener('change',()=>{vs.fps=el.value==='orig'?'orig':+el.value;custom();}));
 document.querySelectorAll('input[name=vaud]').forEach(el=>el.addEventListener('change',()=>{vs.audio=el.value;if(vs.preset==='size')syncVControls();vChanged();}));
-$('#vMbps').addEventListener('input',e=>{vs.mbps=+e.target.value;custom();});
+function setKbps(v){v=Math.round(+v);if(!(v>=200&&v<=20000))return;vs.kbps=v;custom();}
+$('#vKbps').addEventListener('change',e=>setKbps(e.target.value));
+$('#vKbps').addEventListener('input',e=>{const v=+e.target.value;if(v>=200&&v<=20000){vs.kbps=Math.round(v);if(vs.preset!=='size')vs.preset='custom';$('#vKbpsRange').value=vs.kbps;document.querySelectorAll('input[name=vkq]').forEach(el=>el.checked=+el.value===vs.kbps);document.querySelectorAll('.preset').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===vs.preset));vChanged();}});
+$('#vKbpsRange').addEventListener('input',e=>setKbps(e.target.value));
+document.querySelectorAll('input[name=vkq]').forEach(el=>el.addEventListener('change',()=>setKbps(el.value)));
+$('#vCbr').addEventListener('change',e=>{vs.cbr=e.target.checked;vChanged();});
 
 const even=n=>Math.max(2,Math.round(n/2)*2);
 function vPlan(it){
@@ -438,7 +472,7 @@ function vPlan(it){
   const abps=(!it.hasAudio||vs.audio==='none')?0:vs.audio==='keep'?(it.abps||128000):vs.audio*1000;
   let vbps;
   if(vs.preset==='size'){vbps=Math.floor(vs.targetMB*1e6*8*0.94/Math.max(1,it.dur)-abps);vbps=Math.min(20e6,Math.max(150e3,vbps));}
-  else vbps=Math.round(vs.mbps*1e6);
+  else vbps=Math.max(150e3,Math.round(vs.kbps*1000-abps));
   const est=Math.round((vbps+abps)*it.dur/8)+30000;
   return {ow,oh,resize:sc<0.999,fps,vbps,abps,est};
 }
@@ -473,8 +507,13 @@ function vUpdateRow(it){
   r.name.textContent=it.name;
   if(it.w){
     const p=vPlan(it);
-    const src=`${fmtTime(it.dur)} · ${it.w}×${it.h}${it.fps?' · '+Math.round(it.fps)+'fps':''} · ${fmtSize(it.size)}`;
-    const dst=`${p.ow}×${p.oh} · ${(p.vbps/1e6).toFixed(1)} Mbps · ${it.out?fmtSize(it.out.blob.size):'~'+fmtSize(p.est)}`;
+    const kb=b=>Math.round(b/1000)+' kbps';
+    const srcRate=it.size*8/Math.max(0.1,it.dur);
+    const outFps=p.fps||it.fps;
+    const src=`${fmtTime(it.dur)} · ${it.w}×${it.h}${it.fps?' · '+Math.round(it.fps)+'fps':''} · ${kb(srcRate)} · ${fmtSize(it.size)}`;
+    const dst=it.out
+      ?`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''} · ${kb(it.out.blob.size*8/Math.max(0.1,it.dur))} בפועל · ${fmtSize(it.out.blob.size)}`
+      :`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''} · ${kb(p.vbps+p.abps)} · ~${fmtSize(p.est)}`;
     r.specs.innerHTML='';r.specs.append(src,document.createElement('br'));const s=document.createElement('span');s.className='arrow';s.textContent='→ '+dst;r.specs.append(s);
     it.lighter=!it.out&&p.est>=it.size*0.97;
   }else r.specs.textContent=fmtSize(it.size);
@@ -534,40 +573,57 @@ async function vAdd(files){
 }
 $('#vPick').addEventListener('change',e=>{vAdd([...e.target.files]);e.target.value='';});
 
+async function vRunOnce(it,p,opt){
+  const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
+  const output=new MB.Output({format:new MB.Mp4OutputFormat({fastStart:'in-memory'}),target:new MB.BufferTarget()});
+  const video={codec:'avc',forceTranscode:true};
+  if(MB.Quality)video.quality=new MB.Quality({bitrate:p.vbps,bitrateMode:opt.cbr?'constant':'variable'});else video.bitrate=p.vbps;
+  if(p.resize){if(it.w<=it.h)video.width=p.ow;else video.height=p.oh;}
+  if(opt.fps)video.frameRate=opt.fps;
+  const audio=vs.audio==='none'?{discard:true}:vs.audio==='keep'?{}:{codec:'aac',bitrate:(+vs.audio)*1000};
+  const conv=await MB.Conversion.init({input,output,video,audio});
+  if(!conv.isValid){
+    const vd=conv.discardedTracks.find(d=>d.track.isVideoTrack());
+    throw new Error(vd&&vd.reason==='no_encodable_target_codec'?'noenc':vd&&vd.reason==='undecodable_source_codec'?'nodec':'invalid');
+  }
+  it.audioLost=it.hasAudio&&vs.audio!=='none'&&conv.discardedTracks.some(d=>d.track.isAudioTrack()&&d.reason!=='discarded_by_user');
+  it.conv=conv;
+  const r=vRows.get(it.id);
+  conv.onProgress=pr=>{it.progress=pr;if(r){r.bar.style.width=(pr*100)+'%';r.status.textContent=`מכווץ ${Math.round(pr*100)}%`;}};
+  await conv.execute();
+  if(it.canceled)throw new Error('canceled');
+  return new Blob([output.target.buffer],{type:'video/mp4'});
+}
 async function vConvertOne(it,fromAll){
   if(it.status!=='ready'||(vBusy&&!fromAll)||!canVideo)return;
   if(!fromAll){vBusy=true;vItems.forEach(vUpdateRow);}
-  it.status='converting';it.progress=0;it.canceled=false;vUpdateRow(it);vSum();
-  let output;
-  try{
-    const p=vPlan(it);
-    const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
-    output=new MB.Output({format:new MB.Mp4OutputFormat({fastStart:'in-memory'}),target:new MB.BufferTarget()});
-    const video={codec:'avc',bitrate:p.vbps,forceTranscode:true};
-    if(p.resize){if(it.w<=it.h)video.width=p.ow;else video.height=p.oh;}
-    if(p.fps)video.frameRate=p.fps;
-    const audio=vs.audio==='none'?{discard:true}:vs.audio==='keep'?{}:{codec:'aac',bitrate:(+vs.audio)*1000};
-    const conv=await MB.Conversion.init({input,output,video,audio});
-    if(!conv.isValid){
-      const vd=conv.discardedTracks.find(d=>d.track.isVideoTrack());
-      throw new Error(vd&&vd.reason==='no_encodable_target_codec'?'noenc':vd&&vd.reason==='undecodable_source_codec'?'nodec':'invalid');
+  it.status='converting';it.progress=0;it.canceled=false;it.fallback='';vUpdateRow(it);vSum();
+  const p=vPlan(it);
+  // what to try, in order: the chosen settings, then safer fallbacks some phone encoders need
+  const tries=[{cbr:vs.cbr,fps:p.fps,note:''}];
+  if(vs.cbr)tries.push({cbr:false,fps:p.fps,note:'המכשיר לא תומך בקצב קבוע, נעשה שימוש בקצב משתנה'});
+  if(!p.fps&&it.fps>61)tries.push({cbr:false,fps:60,note:'המכשיר לא הצליח לקודד '+Math.round(it.fps)+'fps, ירדתי ל-60'});
+  let lastErr=null;
+  for(const t of tries){
+    try{
+      const blob=await vRunOnce(it,p,t);
+      it.out={blob,name:baseName(it.name)+'-wa.mp4',url:URL.createObjectURL(blob)};
+      it.fallback=t.note;it.status='done';lastErr=null;break;
+    }catch(e){
+      lastErr=e;
+      if(it.canceled)break;
+      const m=e&&e.message;if(m==='nodec')break;
+      it.progress=0;
     }
-    it.audioLost=it.hasAudio&&vs.audio!=='none'&&conv.discardedTracks.some(d=>d.track.isAudioTrack()&&d.reason!=='discarded_by_user');
-    it.conv=conv;
-    const r=vRows.get(it.id);
-    conv.onProgress=pr=>{it.progress=pr;if(r){r.bar.style.width=(pr*100)+'%';r.status.textContent=`מכווץ ${Math.round(pr*100)}%`;}};
-    await conv.execute();
-    if(it.canceled)throw new Error('canceled');
-    const blob=new Blob([output.target.buffer],{type:'video/mp4'});
-    it.out={blob,name:baseName(it.name)+'-wa.mp4',url:URL.createObjectURL(blob)};
-    it.status='done';
-  }catch(e){
-    const msg=e&&e.message||'';
+  }
+  if(lastErr){
+    const msg=lastErr&&lastErr.message||'';
     if(it.canceled){it.status='ready';toast('הכיווץ נעצר');}
     else if(msg==='noenc'){it.status='error';it.error='המכשיר לא מצליח לקודד H.264 בגודל הזה. נסה רזולוציה נמוכה יותר.';}
     else if(msg==='nodec'){it.status='error';it.error='הדפדפן לא יודע לפתוח את סוג הווידאו הזה.';}
-    else{it.status='error';it.error='הכיווץ נכשל'+(msg?': '+msg:'')+'. נסה שוב או הגדרה אחרת.';}
+    else{it.status='error';it.error='הכיווץ נכשל'+(msg?': '+msg:'')+'. נסה רזולוציה או פריימים נמוכים יותר.';}
   }
+  if(it.fallback)toast(it.fallback);
   it.conv=null;
   if(!fromAll){vBusy=false;vItems.forEach(vUpdateRow);}else vUpdateRow(it);
   vSum();

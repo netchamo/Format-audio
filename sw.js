@@ -1,5 +1,5 @@
 // Keeps the app usable offline. Pages load fresh from the network when online; everything else is served from cache first.
-const CACHE = 'media-converter-v3';
+const CACHE = 'media-converter-v4';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
