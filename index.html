@@ -41,6 +41,18 @@
   --wave:#4D5C59; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+/* screen change: each screen has its own masthead tint and slides in */
+body[data-screen="audio"]{--band:#2E6B3F;--band-2:#1F5231}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}}
+:root[data-theme="dark"] body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}
+@keyframes inFromLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@keyframes inFromRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+main.enter-l{animation:inFromLeft .28s ease both}
+main.enter-r{animation:inFromRight .28s ease both}
+.band{transition:background .3s}
+.screen-sub{display:block}
+@media (prefers-reduced-motion:reduce){main.enter-l,main.enter-r{animation:none}}
 html{background:var(--band)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;padding-bottom:130px;min-height:100vh}
 .gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -136,6 +148,12 @@ ul.tracks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 @media (max-width:480px){.acts{justify-content:flex-start}}
 .row audio,.row .outvid{grid-area:player;width:100%;margin-top:6px;border-radius:10px}
 .row audio{height:36px}
+.outs{grid-area:player;display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.out{display:flex;flex-direction:column;gap:4px;background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.out-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;font-weight:700}
+.out-h .ch{display:inline-grid;place-items:center;min-width:26px;height:22px;padding:0 6px;border-radius:6px;background:var(--accent);color:var(--accent-ink);font-family:var(--mono);font-size:12px;margin-inline-end:6px}
+.out-h small{color:var(--muted);font-weight:400;font-family:var(--mono);font-size:12px}
+.out audio{width:100%;margin:0}
 .row .outvid{max-height:320px;background:#000}
 .empty{color:var(--muted);margin:0;padding:6px 0;font-size:15px}
 
@@ -167,7 +185,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
       <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#FFFFFF" fill-opacity=".14"/><g fill="#FFFFFF"><rect x="24" y="38" width="7" height="24" rx="3.5"/><rect x="36" y="27" width="7" height="46" rx="3.5"/><rect x="48" y="20" width="7" height="60" rx="3.5"/><rect x="60" y="31" width="7" height="38" rx="3.5"/><rect x="72" y="40" width="7" height="20" rx="3.5"/></g><rect x="48" y="20" width="7" height="60" rx="3.5" fill="#EDB03A"/></svg>
       <div>
         <h1>ממיר מדיה</h1>
-        <p>הכול רץ בטלפון שלך. שום קובץ לא עולה לשרת.</p>
+        <p id="screenSub">כיווץ וידאו לוואטסאפ · הכול רץ בטלפון, שום קובץ לא עולה לשרת</p>
       </div>
     </div>
     <div class="tabs" role="tablist" aria-label="סוג קובץ">
@@ -286,6 +304,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
             <label><input type="radio" name="chan" id="chan-keep" value="keep" checked><span class="he">כמו במקור</span></label>
             <label><input type="radio" name="chan" id="chan-mono" value="mono"><span class="he">מונו</span></label>
             <label><input type="radio" name="chan" id="chan-stereo" value="stereo"><span class="he">סטריאו</span></label>
+            <label><input type="radio" name="chan" id="chan-split" value="split"><span class="he">פיצול ל-2 מונו (L / R)</span></label>
           </div>
         </fieldset>
       </div>
@@ -338,13 +357,29 @@ async function shareBlob(blob,name){
   try{await navigator.share({files:[new File([blob],name,{type:blob.type})]});}
   catch(e){if(e&&e.name!=='AbortError')toast('השיתוף לא הצליח. נסה "הורד".');}
 }
+async function shareMany(outs){
+  try{await navigator.share({files:outs.map(o=>new File([o.blob],o.name,{type:o.blob.type}))});}
+  catch(e){if(e&&e.name!=='AbortError')toast('השיתוף לא הצליח. נסה "הורד".');}
+}
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
 
 /* ---------- tabs ---------- */
+let curScreen=null;
 function showTab(name){
   const v=name==='video';
+  if(curScreen===name)return;
+  const first=curScreen===null;curScreen=name;
+  document.body.dataset.screen=name;
   $('#tab-video').setAttribute('aria-selected',v);$('#tab-audio').setAttribute('aria-selected',!v);
   $('#pane-video').hidden=!v;$('#pane-audio').hidden=v;$('#vBar').hidden=!v;$('#aBar').hidden=v;
+  $('#screenSub').textContent=v?'כיווץ וידאו לוואטסאפ · הכול רץ בטלפון, שום קובץ לא עולה לשרת':'המרת אודיו · הכול רץ בטלפון, שום קובץ לא עולה לשרת';
+  document.querySelector('meta[name=theme-color]').setAttribute('content',v?'#0E6F68':'#2E6B3F');
+  if(!first){
+    const pane=v?$('#pane-video'):$('#pane-audio');
+    pane.classList.remove('enter-l','enter-r');void pane.offsetWidth;
+    pane.classList.add(v?'enter-r':'enter-l');
+    window.scrollTo({top:0});
+  }
   try{localStorage.setItem('tab',name);}catch(e){}
   if(!v)aItems.forEach(it=>{const r=aRows.get(it.id);if(r)drawWave(r.cv,it);});
 }
@@ -565,6 +600,7 @@ function renderQuality(){
   else if(as.format==='mp3'&&as.rate===22050&&as.kbps>160)note='ב-22.05 kHz קצב ה-MP3 מוגבל ל-160 kbps, וזה מה שיקודד.';
   else if(as.format==='mp3')note='192 kbps מתאים לרוב השימושים. 320 kbps לאיכות מרבית.';
   else note='WAV לא דחוס: איכות מלאה, קובץ גדול בערך פי 10 מ-MP3.';
+  if(as.channels==='split')note+=' פיצול: כל ערוץ יוצא כקובץ מונו נפרד, עם L או R בסוף השם.';
   $('#setNote').textContent=note;
 }
 function aChanged(){aItems.forEach(it=>{if(it.status==='done'){aDropOut(it);it.status='ready';}});renderQuality();aItems.forEach(aUpdateRow);aSum();}
@@ -574,9 +610,11 @@ document.querySelectorAll('input[name=chan]').forEach(el=>el.addEventListener('c
 $('#quality').addEventListener('change',e=>{const v=+e.target.value;if(as.format==='mp3')as.kbps=v;else as.depth=v;aChanged();});
 
 function getCtx(){if(!actx){const C=window.AudioContext||window.webkitAudioContext;actx=new C();}return actx;}
-function outChannels(src){if(as.channels==='mono')return 1;if(as.channels==='stereo')return 2;return as.format==='mp3'?Math.min(2,src):Math.min(8,src);}
+const isSplit=it=>as.channels==='split'&&it.buffer&&it.buffer.numberOfChannels>=2;
+function outChannels(src){if(as.channels==='mono'||as.channels==='split')return 1;if(as.channels==='stereo')return 2;return as.format==='mp3'?Math.min(2,src):Math.min(8,src);}
 function effKbps(){return as.rate===22050?Math.min(160,as.kbps):as.kbps;}
 function estimate(it){const d=it.buffer.duration,ch=outChannels(it.buffer.numberOfChannels);return as.format==='mp3'?Math.round(effKbps()*1000/8*d):Math.round(44+d*as.rate*ch*as.depth/8);}
+const outSize=it=>it.outs?it.outs.reduce((a,o)=>a+o.blob.size,0):0;
 function targetLabel(){return as.format==='mp3'?`MP3 ${effKbps()} kbps`:`WAV ${as.depth}-bit`;}
 function peaks(buf,n){const d=buf.getChannelData(0),step=Math.max(1,Math.floor(d.length/n)),out=new Float32Array(n);
   for(let i=0;i<n;i++){let m=0;const s=i*step,e=Math.min(d.length,s+step);for(let j=s;j<e;j+=4){const v=Math.abs(d[j]);if(v>m)m=v;}out[i]=m;}return out;}
@@ -596,18 +634,16 @@ function aEnsureRow(it){
     <div class="barline"><div class="meter"><i></i></div><span class="status"></span></div>
     <div class="acts">
       <button type="button" class="primary b-conv">המר</button>
-      <button type="button" class="b-dl" hidden>הורד</button>
       <button type="button" class="share b-sh" hidden>שתף</button>
       <button type="button" class="ghost b-rm">הסר</button>
     </div>
-    <audio controls preload="none" hidden></audio>`;
+    <div class="outs" hidden></div>`;
   li.querySelector('.b-conv').addEventListener('click',()=>aConvertOne(it));
-  li.querySelector('.b-dl').addEventListener('click',()=>saveBlob(it.out.blob,it.out.name));
-  li.querySelector('.b-sh').addEventListener('click',()=>shareBlob(it.out.blob,it.out.name));
+  li.querySelector('.b-sh').addEventListener('click',()=>shareMany(it.outs));
   li.querySelector('.b-rm').addEventListener('click',()=>aRemove(it));
   $('#aList').appendChild(li);
   r={li,cv:li.querySelector('canvas'),name:li.querySelector('.name'),specs:li.querySelector('.specs'),bar:li.querySelector('.meter i'),meter:li.querySelector('.meter'),
-     status:li.querySelector('.status'),conv:li.querySelector('.b-conv'),dl:li.querySelector('.b-dl'),sh:li.querySelector('.b-sh'),audio:li.querySelector('audio')};
+     status:li.querySelector('.status'),conv:li.querySelector('.b-conv'),sh:li.querySelector('.b-sh'),outs:li.querySelector('.outs'),outsKey:''};
   aRows.set(it.id,r);return r;
 }
 function aUpdateRow(it){
@@ -615,18 +651,35 @@ function aUpdateRow(it){
   r.name.textContent=it.name;
   if(it.sample){const t=document.createElement('span');t.className='tag';t.textContent='דוגמה';r.name.appendChild(t);}
   if(it.buffer){
-    const b=it.buffer,ch=outChannels(b.numberOfChannels),out=it.out?fmtSize(it.out.blob.size):'~'+fmtSize(estimate(it));
+    const b=it.buffer,ch=outChannels(b.numberOfChannels),split=isSplit(it),out=it.outs?fmtSize(outSize(it)):'~'+fmtSize(estimate(it)*(split?2:1));
     r.specs.innerHTML='';r.specs.append(`${fmtTime(b.duration)} · ${b.numberOfChannels}ch · ${fmtSize(it.size)}`,document.createElement('br'));
-    const s=document.createElement('span');s.className='arrow';s.textContent=`→ ${targetLabel()} · ${as.rate/1000} kHz · ${ch}ch · ${out}`;r.specs.append(s);
+    const s=document.createElement('span');s.className='arrow';s.textContent=`→ ${split?'2 × ':''}${targetLabel()} · ${as.rate/1000} kHz · ${ch}ch · ${out}`;r.specs.append(s);
   }else r.specs.textContent=fmtSize(it.size);
-  const st={decoding:'מפענח…',ready:'מוכן להמרה',converting:`ממיר ${Math.round(it.progress*100)}%`,done:'הומר',error:it.error||'שגיאה'}[it.status];
+  const st={decoding:'מפענח…',ready:(as.channels==='split'&&it.buffer&&it.buffer.numberOfChannels<2)?'הקובץ כבר מונו, ייצא קובץ אחד':'מוכן להמרה',converting:`ממיר ${Math.round(it.progress*100)}%`,done:'הומר',error:it.error||'שגיאה'}[it.status];
   r.status.textContent=st;r.status.className='status'+(it.status==='done'?' done':it.status==='error'?' err':'');
   r.bar.style.width=(it.status==='done'?100:it.status==='converting'?it.progress*100:0)+'%';
   r.meter.hidden=it.status==='error';
   r.conv.hidden=it.status!=='ready';r.conv.disabled=aBusy;
-  r.dl.hidden=it.status!=='done';r.sh.hidden=!(it.status==='done'&&canShareFiles());
-  if(it.status==='done'&&it.out){if(r.audio.dataset.src!==it.out.url){r.audio.src=it.out.url;r.audio.dataset.src=it.out.url;}r.audio.hidden=false;}
-  else{r.audio.hidden=true;if(r.audio.dataset.src){r.audio.removeAttribute('src');delete r.audio.dataset.src;r.audio.load();}}
+  r.sh.hidden=!(it.status==='done'&&canShareFiles());
+  const key=it.status==='done'&&it.outs?it.outs.map(o=>o.url).join('|'):'';
+  if(key!==r.outsKey){
+    r.outsKey=key;r.outs.innerHTML='';
+    if(key){
+      for(const o of it.outs){
+        const d=document.createElement('div');d.className='out';
+        const h=document.createElement('div');h.className='out-h';
+        const lab=document.createElement('span');
+        if(o.ch){const c=document.createElement('span');c.className='ch';c.textContent=o.ch;lab.append(c);}
+        lab.append(o.label||'הקובץ המומר');
+        const sz=document.createElement('small');sz.textContent=' '+fmtSize(o.blob.size);lab.append(sz);
+        const btn=document.createElement('button');btn.type='button';btn.textContent='הורד';btn.addEventListener('click',()=>saveBlob(o.blob,o.name));
+        h.append(lab,btn);
+        const au=document.createElement('audio');au.controls=true;au.preload='none';au.src=o.url;
+        d.append(h,au);r.outs.append(d);
+      }
+    }
+  }
+  r.outs.hidden=!key;
   drawWave(r.cv,it);
 }
 function aSum(){
@@ -636,13 +689,13 @@ function aSum(){
   $('#aConvertAll').disabled=aBusy||!aItems.some(i=>i.status==='ready');
   $('#aZipAll').disabled=aBusy||!done;
 }
-function aDropOut(it){if(it.out){URL.revokeObjectURL(it.out.url);it.out=null;}}
+function aDropOut(it){if(it.outs){it.outs.forEach(o=>URL.revokeObjectURL(o.url));it.outs=null;}}
 function aRemove(it){aDropOut(it);const r=aRows.get(it.id);if(r){r.li.remove();aRows.delete(it.id);}aItems=aItems.filter(x=>x!==it);aSum();}
 $('#aClear').addEventListener('click',()=>{[...aItems].forEach(aRemove);});
 
 async function aAdd(files){
   for(const f of files){
-    const it={id:++uid,name:f.name,size:f.size,buffer:null,peaks:null,status:'decoding',progress:0,out:null};
+    const it={id:++uid,name:f.name,size:f.size,buffer:null,peaks:null,status:'decoding',progress:0,outs:null};
     aItems.push(it);aUpdateRow(it);aSum();
     try{
       const ab=await f.arrayBuffer();
@@ -654,9 +707,14 @@ async function aAdd(files){
 }
 $('#aPick').addEventListener('change',e=>{aAdd([...e.target.files]);e.target.value='';});
 
-async function resample(buf){
-  const ch=outChannels(buf.numberOfChannels),rate=as.rate,len=Math.max(1,Math.ceil(buf.duration*rate));
-  const oc=new OfflineAudioContext(ch,len,rate);const s=oc.createBufferSource();s.buffer=buf;s.connect(oc.destination);s.start();
+async function resample(buf,only){
+  const rate=as.rate,len=Math.max(1,Math.ceil(buf.duration*rate));
+  let src=buf,ch=outChannels(buf.numberOfChannels);
+  if(only!==undefined){ // pull one channel out as its own mono track
+    src=new AudioBuffer({numberOfChannels:1,length:buf.length,sampleRate:buf.sampleRate});
+    src.copyToChannel(buf.getChannelData(only),0);ch=1;
+  }
+  const oc=new OfflineAudioContext(ch,len,rate);const s=oc.createBufferSource();s.buffer=src;s.connect(oc.destination);s.start();
   return oc.startRendering();
 }
 async function encodeWav(b,depth,onP){
@@ -688,10 +746,17 @@ async function aConvertOne(it,fromAll){
   if(!fromAll){aBusy=true;aItems.forEach(aUpdateRow);}
   it.status='converting';it.progress=0;aUpdateRow(it);aSum();
   try{
-    const rb=await resample(it.buffer);
-    const onP=p=>{it.progress=p;const r=aRows.get(it.id);if(r){r.bar.style.width=(p*100)+'%';r.status.textContent=`ממיר ${Math.round(p*100)}%`;drawWave(r.cv,it);}};
-    const blob=as.format==='mp3'?await encodeMp3(rb,effKbps(),onP):await encodeWav(rb,as.depth,onP);
-    it.out={blob,name:baseName(it.name)+'.'+as.format,url:URL.createObjectURL(blob)};it.status='done';
+    const jobs=isSplit(it)
+      ?[{only:0,ch:'L',label:'ערוץ שמאל',suffix:'-L'},{only:1,ch:'R',label:'ערוץ ימין',suffix:'-R'}]
+      :[{only:undefined,ch:'',label:'',suffix:''}];
+    const outs=[];
+    for(let j=0;j<jobs.length;j++){
+      const job=jobs[j],rb=await resample(it.buffer,job.only);
+      const onP=p=>{const t=(j+p)/jobs.length;it.progress=t;const r=aRows.get(it.id);if(r){r.bar.style.width=(t*100)+'%';r.status.textContent=`ממיר ${Math.round(t*100)}%`;drawWave(r.cv,it);}};
+      const blob=as.format==='mp3'?await encodeMp3(rb,effKbps(),onP):await encodeWav(rb,as.depth,onP);
+      outs.push({blob,ch:job.ch,label:job.label,name:baseName(it.name)+job.suffix+'.'+as.format,url:URL.createObjectURL(blob)});
+    }
+    it.outs=outs;it.status='done';
   }catch(e){it.status='error';it.error='ההמרה נכשלה: '+(e&&e.message?e.message:'שגיאה לא ידועה');}
   if(!fromAll){aBusy=false;aItems.forEach(aUpdateRow);}else aUpdateRow(it);
   aSum();
@@ -725,10 +790,10 @@ function makeZip(files){
   return new Blob([...parts,...central,e.buffer],{type:'application/zip'});
 }
 $('#aZipAll').addEventListener('click',async()=>{
-  const done=aItems.filter(i=>i.status==='done'&&i.out);if(!done.length)return;
+  const done=aItems.filter(i=>i.status==='done'&&i.outs);if(!done.length)return;
   const used=new Set(),files=[];
-  for(const it of done){let n=it.out.name,k=2;while(used.has(n))n=baseName(it.out.name)+` (${k++}).`+as.format;used.add(n);files.push({name:n,data:new Uint8Array(await it.out.blob.arrayBuffer())});}
-  saveBlob(makeZip(files),`audio-${as.format}-${done.length}.zip`);
+  for(const it of done)for(const o of it.outs){let n=o.name,k=2;while(used.has(n))n=baseName(o.name)+` (${k++}).`+as.format;used.add(n);files.push({name:n,data:new Uint8Array(await o.blob.arrayBuffer())});}
+  saveBlob(makeZip(files),`audio-${as.format}-${files.length}.zip`);
 });
 
 /* ---------- start ---------- */
