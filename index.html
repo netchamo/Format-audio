@@ -87,6 +87,13 @@ main{display:flex;flex-direction:column;gap:16px;padding-top:18px}
 .drop .hint{color:var(--muted);font-size:14px}
 .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.pickwrap{display:flex;flex-direction:column;gap:8px}
+.pick-alt{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;border-radius:12px;background:var(--surface);color:var(--accent);font-weight:700;font-size:15px;cursor:pointer;border:1.5px solid var(--accent-soft)}
+.pick-alt:hover{border-color:var(--accent)}
+.pick-alt:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.pick-old{position:relative;align-self:center;font-size:13px;color:var(--muted);text-decoration:underline;cursor:pointer;padding:2px 6px}
+.pick-old:focus-within{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.pick-old input,.pick-alt input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .drop .plus{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:28px;line-height:1}
 
 /* presets */
@@ -208,12 +215,23 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
   <div class="col" style="display:flex;flex-direction:column;gap:16px">
     <p class="warn" id="vUnsupported" hidden>הדפדפן הזה לא יודע לקודד וידאו. פתח את האפליקציה ב-Chrome מעודכן, או ב-Safari מגרסה 17 ומעלה.</p>
 
-    <label class="drop" id="vDrop">
-      <input type="file" id="vPick" multiple accept="video/*,.mp4,.mov,.m4v,.webm,.mkv">
-      <span class="plus" aria-hidden="true">+</span>
-      <strong>בחר סרטונים</strong>
-      <span class="hint">MP4 · MOV (אייפון) · WEBM · MKV</span>
-    </label>
+    <div class="pickwrap">
+      <label class="drop" id="vDrop">
+        <input type="file" id="vPick" accept="video/*">
+        <span class="plus" aria-hidden="true">+</span>
+        <strong>בחר סרטון מהגלריה</strong>
+        <span class="hint">לחיצה על הסרטון בוחרת אותו מיד</span>
+      </label>
+      <label class="pick-alt">
+        <input type="file" id="vPickFiles" multiple accept=".mp4,.mov,.m4v,.webm,.mkv,.3gp">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>מאפליקציית הקבצים (גם כמה סרטונים יחד)</span>
+      </label>
+      <label class="pick-old">
+        <input type="file" id="vPickMulti" multiple accept="video/*,.mp4,.mov,.m4v,.webm,.mkv">
+        <span>או: כמה סרטונים מהגלריה (השיטה הקודמת)</span>
+      </label>
+    </div>
 
     <section class="card" aria-label="הגדרות וידאו">
       <div class="card-h"><span class="chip-title t-green"><i>1</i>בחר איכות</span></div>
@@ -571,7 +589,7 @@ async function vAdd(files){
     vUpdateRow(it);vSum();
   }
 }
-$('#vPick').addEventListener('change',e=>{vAdd([...e.target.files]);e.target.value='';});
+['#vPick','#vPickFiles','#vPickMulti'].forEach(q=>$(q).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)vAdd(fs);}));
 
 async function vRunOnce(it,p,opt){
   const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
