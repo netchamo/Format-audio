@@ -1,13 +1,9 @@
-// Caches the app so it opens without internet after the first visit.
-const CACHE = 'audio-converter-v1';
-const LAME = 'https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';
+// Keeps the app usable offline. Pages load fresh from the network when online; everything else is served from cache first.
+const CACHE = 'media-converter-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(async c => {
-    await c.addAll(CORE);
-    try { await c.add(new Request(LAME, { mode: 'no-cors' })); } catch (_) {}
-  }));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)));
   self.skipWaiting();
 });
 
@@ -16,18 +12,22 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
+function store(req, res) {
+  if (res && (res.ok || res.type === 'opaque')) {
+    const copy = res.clone();
+    caches.open(CACHE).then(c => c.put(req, copy));
+  }
+  return res;
+}
+
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  if (req.mode === 'navigate') {
+    e.respondWith(fetch(req).then(res => store(req, res)).catch(() => caches.match(req).then(r => r || caches.match('./index.html'))));
+    return;
+  }
   e.respondWith(
-    caches.match(e.request).then(hit => {
-      const net = fetch(e.request).then(res => {
-        if (res && (res.ok || res.type === 'opaque')) {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
-        }
-        return res;
-      }).catch(() => hit);
-      return hit || net;
-    })
+    caches.match(req).then(hit => hit || fetch(req).then(res => store(req, res)))
   );
 });

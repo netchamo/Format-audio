@@ -1,18 +1,35 @@
 {
-  "name": "ממיר אודיו",
-  "short_name": "ממיר אודיו",
-  "description": "ממיר קבצי אודיו ל-MP3 ו-WAV שרץ בדפדפן, בלי העלאה לשרת",
+  "name": "ממיר מדיה",
+  "short_name": "ממיר מדיה",
+  "description": "מכווץ וידאו לוואטסאפ וממיר אודיו ל-MP3 ו-WAV, ישירות בדפדפן",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ECEFEE",
+  "background_color": "#E4EFEB",
   "theme_color": "#0E6F68",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ]
 }
