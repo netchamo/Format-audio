@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E6F68">
+<meta name="description" content="ממיר קבצי אודיו ל-MP3 ו-WAV שרץ בדפדפן, בלי העלאה לשרת">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ממיר אודיו">
+<title>ממיר אודיו מקומי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Secular+One&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<style>
+/* Layout: one narrow console column — source tray, settings strip, track list, transport bar */
+:root{
+  --bg:#ECEFEE; --surface:#FAFBFB; --ink:#17201F; --muted:#5A6765; --line:#CBD4D2;
+  --accent:#0E6F68; --accent-ink:#FFFFFF; --level:#C98A00; --good:#1E7A44; --bad:#B42318;
+  --wave:#9AA9A6;
+  --display:"Secular One","Assistant",system-ui,sans-serif;
+  --body:"Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111615; --surface:#19201F; --ink:#E4ECEA; --muted:#93A29F; --line:#2C3836;
+  --accent:#3BB5A7; --accent-ink:#06201D; --level:#EDB03A; --good:#4FBF7E; --bad:#F2796B; --wave:#4D5C59;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111615; --surface:#19201F; --ink:#E4ECEA; --muted:#93A29F; --line:#2C3836;
+  --accent:#3BB5A7; --accent-ink:#06201D; --level:#EDB03A; --good:#4FBF7E; --bad:#F2796B; --wave:#4D5C59;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 120px}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:4px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,7vw,40px);line-height:1.1;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;font-size:15px}
+.mono{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+
+.drop{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:28px 16px;border:1.5px dashed var(--line);
+  border-radius:var(--r);background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop.over{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.drop strong{font-size:18px}
+.drop .hint{color:var(--muted);font-size:14px}
+.drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+
+.settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+@media (max-width:520px){.settings{grid-template-columns:minmax(0,1fr)}}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+legend{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);padding:0;margin-bottom:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-family:var(--mono);font-size:13px;background:var(--bg);color:var(--ink);transition:background .12s,border-color .12s}
+.seg span.he{font-family:var(--body);font-size:14px;padding:5px 12px}
+.seg input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.seg input:disabled+span{opacity:.4}
+.note{grid-column:1/-1;margin:0;font-size:13px;color:var(--muted)}
+
+.listhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.listhead h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+ul.tracks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:96px minmax(0,1fr) auto;grid-template-areas:"wave meta acts" "wave bar acts" "player player player";gap:4px 14px;padding:14px 0;border-bottom:1px solid var(--line);align-items:center}
+@media (max-width:480px){.row{grid-template-columns:64px minmax(0,1fr);grid-template-areas:"wave meta" "wave bar" "acts acts" "player player"}}
+.row canvas{grid-area:wave;width:100%;height:44px;display:block}
+.meta{grid-area:meta;min-width:0}
+.name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;padding:1px 7px;border-radius:999px;border:1px solid var(--level);color:var(--level);margin-inline-start:6px;vertical-align:2px}
+.specs{color:var(--muted);text-align:right;overflow-wrap:anywhere}
+.barline{grid-area:bar;display:flex;align-items:center;gap:10px;min-width:0}
+.meter{flex:1;height:6px;border-radius:3px;background:color-mix(in srgb,var(--line) 70%,transparent);overflow:hidden;min-width:40px}
+.meter i{display:block;height:100%;width:0;background:var(--level);transition:width .1s}
+.status{font-size:13px;color:var(--muted);white-space:nowrap}
+.status.done{color:var(--good);font-weight:600}
+.status.err{color:var(--bad);white-space:normal}
+.acts{grid-area:acts;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:480px){.acts{justify-content:flex-start}}
+.row audio{grid-area:player;width:100%;height:36px;margin-top:6px}
+
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;font-size:14px;font-weight:600}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding-inline:8px}
+.empty{color:var(--muted);padding:18px 0;margin:0}
+
+.transport{position:fixed;inset-inline:0;bottom:0;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line);
+  padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.transport .in{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.transport .sum{flex:1;min-width:140px;font-size:14px;color:var(--muted)}
+.transport button{padding:9px 16px;font-size:15px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;max-width:calc(100% - 32px);text-align:center}
+.foot{color:var(--muted);font-size:13px;margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap" dir="rtl" lang="he">
+  <header>
+    <h1>ממיר אודיו</h1>
+    <p class="sub">ההמרה רצה בדפדפן שלך. הקבצים לא עולים לשום שרת.</p>
+  </header>
+
+  <label class="drop" id="drop">
+    <input type="file" id="pick" multiple accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.flac,.webm">
+    <strong>בחר קבצים או גרור לכאן</strong>
+    <span class="hint">MP3 · WAV · M4A · AAC · OGG · OPUS · FLAC · וגם פס הקול מקובצי וידאו</span>
+  </label>
+
+  <section class="settings" aria-label="הגדרות המרה">
+    <fieldset>
+      <legend>פורמט יעד</legend>
+      <div class="seg" id="fmt">
+        <label><input type="radio" name="fmt" id="fmt-mp3" value="mp3" checked><span>MP3</span></label>
+        <label><input type="radio" name="fmt" id="fmt-wav" value="wav"><span>WAV</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend id="qLegend">קצב סיביות</legend>
+      <div class="seg" id="quality"></div>
+    </fieldset>
+    <fieldset>
+      <legend>קצב דגימה</legend>
+      <div class="seg" id="rate">
+        <label><input type="radio" name="rate" id="rate-22" value="22050"><span>22.05 kHz</span></label>
+        <label><input type="radio" name="rate" id="rate-32" value="32000"><span>32 kHz</span></label>
+        <label><input type="radio" name="rate" id="rate-44" value="44100" checked><span>44.1 kHz</span></label>
+        <label><input type="radio" name="rate" id="rate-48" value="48000"><span>48 kHz</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>ערוצים</legend>
+      <div class="seg" id="chan">
+        <label><input type="radio" name="chan" id="chan-keep" value="keep" checked><span class="he">כמו במקור</span></label>
+        <label><input type="radio" name="chan" id="chan-mono" value="mono"><span class="he">מונו</span></label>
+        <label><input type="radio" name="chan" id="chan-stereo" value="stereo"><span class="he">סטריאו</span></label>
+      </div>
+    </fieldset>
+    <p class="note" id="setNote"></p>
+  </section>
+
+  <section>
+    <div class="listhead">
+      <h2>קבצים</h2>
+      <button class="ghost" id="clear" type="button">נקה רשימה</button>
+    </div>
+    <ul class="tracks" id="list"></ul>
+    <p class="empty" id="empty" hidden>אין עדיין קבצים. בחר קובץ למעלה.</p>
+  </section>
+
+  <p class="foot" id="dlNote">כל קובץ יורד בנפרד בכפתור "הורד". "הורד הכל" אורז את כולם ל-ZIP. בטלפון אפשר להוסיף את האפליקציה למסך הבית ולהשתמש בה גם בלי אינטרנט.</p>
+</div>
+
+<div class="transport" dir="rtl">
+  <div class="in">
+    <div class="sum" id="sum"></div>
+    <button class="primary" id="convertAll" type="button">המר הכל</button>
+    <button id="zipAll" type="button" disabled>הורד הכל (ZIP)</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const state={format:'mp3',kbps:192,depth:16,rate:44100,channels:'keep',items:[]};
+const rows=new Map();
+let uid=0, ctx=null, busy=false;
+const tick=()=>new Promise(r=>setTimeout(r,0));
+const hasLame=()=>typeof window.lamejs!=='undefined';
+
+// ---------- capability ----------
+
+
+// ---------- settings ----------
+function renderQuality(){
+  const q=$('#quality');
+  if(state.format==='mp3'){
+    $('#qLegend').textContent='קצב סיביות';
+    const opts=[128,192,256,320];
+    q.innerHTML=opts.map(k=>`<label><input type="radio" name="q" id="q-${k}" value="${k}" ${k===state.kbps?'checked':''}><span>${k} kbps</span></label>`).join('');
+  }else{
+    $('#qLegend').textContent='עומק סיביות';
+    q.innerHTML=[16,24].map(d=>`<label><input type="radio" name="q" id="q-d${d}" value="${d}" ${d===state.depth?'checked':''}><span>${d}-bit</span></label>`).join('');
+  }
+  let note='';
+  if(state.format==='mp3'&&!hasLame()) note='מקודד ה-MP3 לא נטען. בדוק חיבור לאינטרנט ורענן, או בחר WAV.';
+  else if(state.format==='mp3'&&state.rate===22050&&state.kbps>160) note='ב-22.05 kHz קצב ה-MP3 מוגבל ל-160 kbps, וזה מה שיקודד.';
+  else if(state.format==='mp3') note='192 kbps מתאים לרוב השימושים. 320 kbps לאיכות מרבית.';
+  else note='WAV הוא לא דחוס: איכות מלאה, קובץ גדול בערך פי 10 מ-MP3.';
+  $('#setNote').textContent=note;
+}
+function onSettings(){
+  state.items.forEach(it=>{if(it.status==='done'){dropOutput(it);it.status='ready';}});
+  renderQuality(); state.items.forEach(updateRow); updateSum();
+}
+document.querySelectorAll('input[name=fmt]').forEach(el=>el.addEventListener('change',()=>{state.format=el.value;onSettings();}));
+document.querySelectorAll('input[name=rate]').forEach(el=>el.addEventListener('change',()=>{state.rate=+el.value;onSettings();}));
+document.querySelectorAll('input[name=chan]').forEach(el=>el.addEventListener('change',()=>{state.channels=el.value;onSettings();}));
+$('#quality').addEventListener('change',e=>{const v=+e.target.value;if(state.format==='mp3')state.kbps=v;else state.depth=v;onSettings();});
+
+// ---------- helpers ----------
+function getCtx(){if(!ctx){const C=window.AudioContext||window.webkitAudioContext;ctx=new C();}return ctx;}
+function fmtTime(s){s=Math.round(s);const m=Math.floor(s/60),x=s%60;return m>=60?`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`;}
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(0)+' KB';return (b/1048576).toFixed(b<10485760?1:0)+' MB';}
+function baseName(n){return n.replace(/\.[^.]+$/,'')||'audio';}
+function outChannels(src){
+  if(state.channels==='mono')return 1;
+  if(state.channels==='stereo')return 2;
+  return state.format==='mp3'?Math.min(2,src):Math.min(8,src);
+}
+function effKbps(){return state.rate===22050?Math.min(160,state.kbps):state.kbps;}
+function estimate(it){
+  if(!it.buffer)return null;
+  const d=it.buffer.duration,ch=outChannels(it.buffer.numberOfChannels);
+  return state.format==='mp3'?Math.round(effKbps()*1000/8*d):Math.round(44+d*state.rate*ch*state.depth/8);
+}
+function targetLabel(){return state.format==='mp3'?`MP3 ${effKbps()} kbps`:`WAV ${state.depth}-bit`;}
+function peaks(buf,n){
+  const d=buf.getChannelData(0),step=Math.max(1,Math.floor(d.length/n)),out=new Float32Array(n);
+  for(let i=0;i<n;i++){let m=0;const s=i*step,e=Math.min(d.length,s+step);for(let j=s;j<e;j+=4){const v=Math.abs(d[j]);if(v>m)m=v;}out[i]=m;}
+  return out;
+}
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function drawWave(cv,it){
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth||96,h=cv.clientHeight||44;
+  cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);g.clearRect(0,0,w,h);
+  const p=it.peaks;if(!p)return;
+  const done=it.status==='done'?1:(it.status==='converting'?it.progress:0);
+  const n=p.length,bw=w/n;
+  for(let i=0;i<n;i++){
+    const x=w-(i+1)*bw; // RTL: start on the right
+    const amp=Math.max(1,p[i]*(h-4));
+    g.fillStyle=(i/n)<done?cssVar('--level'):cssVar('--wave');
+    g.fillRect(x+0.5,(h-amp)/2,Math.max(1,bw-1),amp);
+  }
+}
+
+// ---------- rows ----------
+function ensureRow(it){
+  let r=rows.get(it.id);if(r)return r;
+  const li=document.createElement('li');li.className='row';
+  li.innerHTML=`<canvas aria-hidden="true"></canvas>
+    <div class="meta"><div class="name"></div><div class="specs mono" dir="ltr"></div></div>
+    <div class="barline"><div class="meter"><i></i></div><span class="status"></span></div>
+    <div class="acts">
+      <button type="button" class="b-conv">המר</button>
+      <button type="button" class="b-dl" hidden>הורד</button>
+      <button type="button" class="b-sh" hidden>שתף / שמור</button>
+      <button type="button" class="ghost b-rm" aria-label="הסר">הסר</button>
+    </div>
+    <audio controls preload="none" hidden></audio>`;
+  li.querySelector('.b-conv').addEventListener('click',()=>convertOne(it));
+  li.querySelector('.b-dl').addEventListener('click',()=>saveBlob(it.out.blob,it.out.name));
+  li.querySelector('.b-sh').addEventListener('click',()=>shareItem(it));
+  li.querySelector('.b-rm').addEventListener('click',()=>removeItem(it));
+  $('#list').appendChild(li);
+  r={li,cv:li.querySelector('canvas'),name:li.querySelector('.name'),specs:li.querySelector('.specs'),
+     bar:li.querySelector('.meter i'),status:li.querySelector('.status'),conv:li.querySelector('.b-conv'),
+     dl:li.querySelector('.b-dl'),sh:li.querySelector('.b-sh'),audio:li.querySelector('audio')};
+  rows.set(it.id,r);return r;
+}
+function updateRow(it){
+  const r=ensureRow(it);
+  r.name.textContent=it.name;
+  if(it.sample){const t=document.createElement('span');t.className='tag';t.textContent='דוגמה';r.name.appendChild(t);}
+  if(it.buffer){
+    const b=it.buffer,ch=outChannels(b.numberOfChannels);
+    const out=it.out?fmtSize(it.out.blob.size):'~'+fmtSize(estimate(it));
+    r.specs.textContent=`${fmtTime(b.duration)} · ${b.numberOfChannels}ch · ${fmtSize(it.size)}  →  ${targetLabel()} · ${(state.rate/1000).toString()} kHz · ${ch}ch · ${out}`;
+  }else r.specs.textContent=fmtSize(it.size);
+  const st={decoding:'מפענח…',ready:'מוכן להמרה',converting:`ממיר ${Math.round(it.progress*100)}%`,done:'הומר',error:it.error||'שגיאה'}[it.status];
+  r.status.textContent=st;r.status.className='status'+(it.status==='done'?' done':it.status==='error'?' err':'');
+  r.bar.style.width=(it.status==='done'?100:it.status==='converting'?it.progress*100:0)+'%';
+  r.bar.parentElement.hidden=it.status==='error';
+  r.conv.hidden=it.status==='done'||it.status==='error';
+  r.conv.disabled=it.status!=='ready'||busy;
+  r.dl.hidden=it.status!=='done';
+  r.sh.hidden=!(it.status==='done'&&canShareFiles());
+  if(it.status==='done'&&it.out){ if(r.audio.dataset.src!==it.out.url){r.audio.src=it.out.url;r.audio.dataset.src=it.out.url;} r.audio.hidden=false; }
+  else{ r.audio.hidden=true; if(r.audio.dataset.src){r.audio.removeAttribute('src');delete r.audio.dataset.src;r.audio.load();} }
+  drawWave(r.cv,it);
+}
+function updateSum(){
+  const n=state.items.length,done=state.items.filter(i=>i.status==='done').length;
+  const pending=state.items.filter(i=>i.status==='ready').length;
+  $('#sum').textContent=n?`${n} קבצים · ${done} הומרו`:'אין קבצים';
+  $('#empty').hidden=n>0;
+  $('#convertAll').disabled=busy||!pending;
+  $('#zipAll').disabled=busy||!done;
+}
+function dropOutput(it){if(it.out){URL.revokeObjectURL(it.out.url);it.out=null;}}
+function removeItem(it){
+  dropOutput(it);const r=rows.get(it.id);if(r){r.li.remove();rows.delete(it.id);}
+  state.items=state.items.filter(x=>x!==it);updateSum();
+}
+$('#clear').addEventListener('click',()=>{[...state.items].forEach(removeItem);});
+
+// ---------- input ----------
+async function addFiles(files){
+  for(const f of files){
+    const it={id:++uid,name:f.name,size:f.size,buffer:null,peaks:null,status:'decoding',progress:0,out:null};
+    state.items.push(it);updateRow(it);updateSum();
+    try{
+      const ab=await f.arrayBuffer();
+      const buf=await new Promise((res,rej)=>{const p=getCtx().decodeAudioData(ab,res,rej);if(p&&p.catch)p.catch(rej);});
+      it.buffer=buf;it.peaks=peaks(buf,60);it.status='ready';
+    }catch(e){it.status='error';it.error='הדפדפן לא הצליח לפענח את הקובץ. נסה MP3, WAV, M4A, OGG או FLAC.';}
+    updateRow(it);updateSum();
+  }
+}
+$('#pick').addEventListener('change',e=>{addFiles([...e.target.files]);e.target.value='';});
+const drop=$('#drop');
+['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();if(t==='drop'||e.target===document.documentElement)drop.classList.remove('over');}));
+document.addEventListener('drop',e=>{const fs=[...(e.dataTransfer?.files||[])];if(fs.length)addFiles(fs);});
+
+// ---------- conversion ----------
+async function resample(buf){
+  const ch=outChannels(buf.numberOfChannels),rate=state.rate;
+  const len=Math.max(1,Math.ceil(buf.duration*rate));
+  const oc=new OfflineAudioContext(ch,len,rate);
+  const s=oc.createBufferSource();s.buffer=buf;s.connect(oc.destination);s.start();
+  return oc.startRendering();
+}
+async function encodeWav(b,depth,onP){
+  const ch=b.numberOfChannels,n=b.length,bps=depth/8,size=n*ch*bps;
+  const ab=new ArrayBuffer(44+size),v=new DataView(ab);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF');v.setUint32(4,36+size,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);
+  v.setUint16(22,ch,true);v.setUint32(24,b.sampleRate,true);v.setUint32(28,b.sampleRate*ch*bps,true);
+  v.setUint16(32,ch*bps,true);v.setUint16(34,depth,true);w(36,'data');v.setUint32(40,size,true);
+  const cs=[];for(let c=0;c<ch;c++)cs.push(b.getChannelData(c));
+  let o=44;const chunk=262144;
+  for(let i=0;i<n;i++){
+    for(let c=0;c<ch;c++){
+      const s=Math.max(-1,Math.min(1,cs[c][i]));
+      if(depth===16){v.setInt16(o,s<0?s*0x8000:s*0x7FFF,true);o+=2;}
+      else{const x=Math.round(s<0?s*0x800000:s*0x7FFFFF);v.setUint8(o,x&255);v.setUint8(o+1,(x>>8)&255);v.setUint8(o+2,(x>>16)&255);o+=3;}
+    }
+    if(i%chunk===0){onP(i/n);await tick();}
+  }
+  return new Blob([ab],{type:'audio/wav'});
+}
+function toI16(f){const o=new Int16Array(f.length);for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));o[i]=s<0?s*0x8000:s*0x7FFF;}return o;}
+async function encodeMp3(b,kbps,onP){
+  const ch=b.numberOfChannels,enc=new lamejs.Mp3Encoder(ch,b.sampleRate,kbps);
+  const l=toI16(b.getChannelData(0)),r=ch>1?toI16(b.getChannelData(1)):null;
+  const parts=[],blk=1152*16;let k=0;
+  const push=a=>{if(a&&a.length)parts.push(new Uint8Array(a.buffer,a.byteOffset,a.length).slice());};
+  for(let i=0;i<l.length;i+=blk,k++){
+    const lc=l.subarray(i,i+blk);
+    push(r?enc.encodeBuffer(lc,r.subarray(i,i+blk)):enc.encodeBuffer(lc));
+    if(k%12===0){onP(i/l.length);await tick();}
+  }
+  push(enc.flush());
+  return new Blob(parts,{type:'audio/mpeg'});
+}
+async function convertOne(it,fromAll){
+  if(it.status!=='ready'||(busy&&!fromAll))return;
+  if(state.format==='mp3'&&!hasLame()){toast('מקודד ה-MP3 לא נטען. רענן את הדף או בחר WAV.');return;}
+  if(!fromAll){busy=true;state.items.forEach(updateRow);}
+  it.status='converting';it.progress=0;updateRow(it);updateSum();
+  try{
+    const rb=await resample(it.buffer);
+    const onP=p=>{it.progress=p;const r=rows.get(it.id);if(r){r.bar.style.width=(p*100)+'%';r.status.textContent=`ממיר ${Math.round(p*100)}%`;drawWave(r.cv,it);}};
+    const blob=state.format==='mp3'?await encodeMp3(rb,effKbps(),onP):await encodeWav(rb,state.depth,onP);
+    it.out={blob,name:baseName(it.name)+'.'+state.format,url:URL.createObjectURL(blob)};
+    it.status='done';
+  }catch(e){it.status='error';it.error='ההמרה נכשלה: '+(e&&e.message?e.message:'שגיאה לא ידועה');}
+  if(!fromAll){busy=false;state.items.forEach(updateRow);}else updateRow(it);
+  updateSum();
+}
+$('#convertAll').addEventListener('click',async()=>{
+  if(busy)return;
+  if(state.format==='mp3'&&!hasLame()){toast('מקודד ה-MP3 לא נטען. רענן את הדף או בחר WAV.');return;}
+  busy=true;state.items.forEach(updateRow);updateSum();
+  for(const it of state.items.filter(i=>i.status==='ready'))await convertOne(it,true);
+  busy=false;state.items.forEach(updateRow);updateSum();
+  const n=state.items.filter(i=>i.status==='done').length;if(n)toast(`${n} קבצים מוכנים להורדה`);
+});
+
+function saveBlob(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+}
+let shareOK=null;
+function canShareFiles(){if(shareOK!==null)return shareOK;try{shareOK=!!(navigator.canShare&&navigator.canShare({files:[new File([new Uint8Array(1)],'a.mp3',{type:'audio/mpeg'})]}));}catch(e){shareOK=false;}return shareOK;}
+async function shareItem(it){
+  try{await navigator.share({files:[new File([it.out.blob],it.out.name,{type:it.out.blob.type})],title:it.out.name});}
+  catch(e){if(e&&e.name!=='AbortError')toast('השיתוף לא הצליח. נסה "הורד".');}
+}
+// ---------- zip (store, UTF-8 names) ----------
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function makeZip(files){
+  const te=new TextEncoder(),parts=[],central=[];let off=0;
+  const d=new Date(),time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  for(const f of files){
+    const nm=te.encode(f.name),crc=crc32(f.data),len=f.data.length;
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);
+    h.setUint16(10,time,true);h.setUint16(12,date,true);h.setUint32(14,crc,true);h.setUint32(18,len,true);h.setUint32(22,len,true);
+    h.setUint16(26,nm.length,true);h.setUint16(28,0,true);
+    parts.push(h.buffer,nm,f.data);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,0,true);
+    c.setUint16(12,time,true);c.setUint16(14,date,true);c.setUint32(16,crc,true);c.setUint32(20,len,true);c.setUint32(24,len,true);
+    c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+    central.push(c.buffer,nm);
+    off+=30+nm.length+len;
+  }
+  const cd=central.reduce((s,p)=>s+p.byteLength,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cd,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...central,e.buffer],{type:'application/zip'});
+}
+async function downloadItems(items){
+  const done=items.filter(i=>i.status==='done'&&i.out);if(!done.length)return;
+  const used=new Set(),files=[];
+  for(const it of done){
+    let n=it.out.name,k=2;while(used.has(n)){n=baseName(it.out.name)+` (${k++}).`+state.format;}used.add(n);
+    files.push({name:n,data:new Uint8Array(await it.out.blob.arrayBuffer())});
+  }
+  const zip=makeZip(files);
+  const fname=done.length===1?baseName(done[0].out.name)+'-'+state.format+'.zip':`audio-${state.format}-${done.length}.zip`;
+  saveBlob(zip,fname);
+}
+$('#zipAll').addEventListener('click',()=>downloadItems(state.items));
+
+// ---------- toast ----------
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3200);}
+
+// ---------- sample ----------
+async function addSample(){
+  try{
+    const sr=44100,dur=4,oc=new OfflineAudioContext(2,sr*dur,sr);
+    [220,277.18,329.63,440].forEach((f,i)=>{
+      const o=oc.createOscillator();o.type=i%2?'triangle':'sine';o.frequency.value=f;
+      const g=oc.createGain(),t0=i*0.25;g.gain.setValueAtTime(0,0);g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(0.16,t0+0.04);g.gain.exponentialRampToValueAtTime(0.001,dur-0.05);
+      o.connect(g);
+      if(oc.createStereoPanner){const p=oc.createStereoPanner();p.pan.value=(i-1.5)/2;g.connect(p);p.connect(oc.destination);}else g.connect(oc.destination);
+      o.start(t0);o.stop(dur);
+    });
+    const buf=await oc.startRendering();
+    const it={id:++uid,name:'אקורד-לדוגמה.wav',size:44+buf.length*4,buffer:buf,peaks:peaks(buf,60),status:'ready',progress:0,out:null,sample:true};
+    state.items.push(it);updateRow(it);updateSum();
+  }catch(e){updateSum();}
+}
+
+renderQuality();updateSum();addSample();
+window.addEventListener('load',()=>{if(state.format==='mp3')renderQuality();});
+const mq=window.matchMedia('(prefers-color-scheme: dark)');mq.addEventListener&&mq.addEventListener('change',()=>state.items.forEach(it=>{const r=rows.get(it.id);if(r)drawWave(r.cv,it);}));
+})();
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
