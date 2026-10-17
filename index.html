@@ -46,6 +46,9 @@
 body[data-screen="audio"]{--band:#2E6B3F;--band-2:#1F5231}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}}
 :root[data-theme="dark"] body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}
+body[data-screen="extract"]{--band:#17606F;--band-2:#104A57}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body[data-screen="extract"]{--band:#123F49;--band-2:#0D323A}}
+:root[data-theme="dark"] body[data-screen="extract"]{--band:#123F49;--band-2:#0D323A}
 @keyframes inFromLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
 @keyframes inFromRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 main.enter-l{animation:inFromLeft .28s ease both}
@@ -66,8 +69,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
 .brand svg{flex:none}
 h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,7vw,36px);line-height:1.1;margin:0}
 .band p{margin:2px 0 0;opacity:.85;font-size:14px}
-.tabs{display:flex;gap:4px;padding:4px;background:color-mix(in srgb,#000 22%,transparent);border-radius:999px;align-self:flex-start}
-.tabs button{border:0;background:transparent;color:var(--band-ink);font:inherit;font-weight:700;font-size:15px;padding:7px 18px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:7px;opacity:.85}
+.tabs{display:flex;gap:4px;padding:4px;background:color-mix(in srgb,#000 22%,transparent);border-radius:999px;align-self:stretch;max-width:460px}
+.tabs button{flex:1;justify-content:center;white-space:nowrap;border:0;background:transparent;color:var(--band-ink);font:inherit;font-weight:700;font-size:15px;padding:7px 8px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:6px;opacity:.85}
+.tabs button svg{flex:none}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--accent);opacity:1}
 .tabs button:focus-visible{outline:2px solid var(--level);outline-offset:2px}
 
@@ -204,6 +208,8 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
     <div class="tabs" role="tablist" aria-label="סוג קובץ">
       <button role="tab" id="tab-video" aria-selected="true" aria-controls="pane-video" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>וידאו</button>
+      <button role="tab" id="tab-extract" aria-selected="false" aria-controls="pane-extract" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="12" height="10" rx="2"/><path d="M14 7.5l4-2v7l-4-2"/><path d="M8 17v3M12 16v4M16 18v2M4 18v2"/></svg>חילוץ שמע</button>
       <button role="tab" id="tab-audio" aria-selected="false" aria-controls="pane-audio" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>אודיו</button>
     </div>
@@ -303,6 +309,59 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
   </div>
 </main>
 
+<!-- ================= EXTRACT ================= -->
+<main class="gut" id="pane-extract" role="tabpanel" aria-labelledby="tab-extract" hidden>
+  <div class="col" style="display:flex;flex-direction:column;gap:16px">
+    <div class="pickwrap">
+      <label class="drop" id="xDrop">
+        <input type="file" id="xPick" accept="video/*">
+        <span class="plus" aria-hidden="true">+</span>
+        <strong>בחר סרטון לחילוץ השמע</strong>
+        <span class="hint">השמע יוצא כקובץ נפרד, הסרטון עצמו לא משתנה</span>
+      </label>
+      <label class="pick-alt">
+        <input type="file" id="xPickFiles" multiple accept=".mp4,.mov,.m4v,.webm,.mkv,.3gp">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>מאפליקציית הקבצים (גם כמה סרטונים יחד)</span>
+      </label>
+      <label class="pick-old">
+        <input type="file" id="xPickMulti" multiple accept="video/*,.mp4,.mov,.m4v,.webm,.mkv">
+        <span>או: כמה סרטונים מהגלריה (השיטה הקודמת)</span>
+      </label>
+    </div>
+
+    <section class="card" aria-label="פורמט השמע">
+      <div class="card-h"><span class="chip-title t-green"><i>1</i>פורמט השמע</span></div>
+      <div class="grid2" style="margin-top:0">
+        <fieldset>
+          <legend>פורמט</legend>
+          <div class="seg">
+            <label><input type="radio" name="xfmt" id="xfmt-m4a" value="m4a" checked><span>M4A</span></label>
+            <label><input type="radio" name="xfmt" id="xfmt-mp3" value="mp3"><span>MP3</span></label>
+            <label><input type="radio" name="xfmt" id="xfmt-wav" value="wav"><span>WAV</span></label>
+          </div>
+        </fieldset>
+        <fieldset id="xRateField">
+          <legend>קצב MP3</legend>
+          <div class="seg">
+            <label><input type="radio" name="xkbps" id="xkbps-128" value="128"><span>128 kbps</span></label>
+            <label><input type="radio" name="xkbps" id="xkbps-192" value="192" checked><span>192 kbps</span></label>
+            <label><input type="radio" name="xkbps" id="xkbps-256" value="256"><span>256 kbps</span></label>
+            <label><input type="radio" name="xkbps" id="xkbps-320" value="320"><span>320 kbps</span></label>
+          </div>
+        </fieldset>
+      </div>
+      <p class="tip" id="xNote"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><span class="chip-title t-amber"><i>2</i>הסרטונים שלך</span><button class="ghost" id="xClear" type="button">נקה</button></div>
+      <ul class="tracks" id="xList"></ul>
+      <p class="empty" id="xEmpty">עוד אין סרטונים. בחר סרטון למעלה.</p>
+    </section>
+  </div>
+</main>
+
 <!-- ================= AUDIO ================= -->
 <main class="gut" id="pane-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
   <div class="col" style="display:flex;flex-direction:column;gap:16px">
@@ -365,6 +424,13 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
     <button class="primary" id="vConvertAll" type="button">כווץ הכל</button>
   </div>
 </div>
+<div class="transport gut" id="xBar" hidden>
+  <div class="in col">
+    <div class="sum" id="xSum"></div>
+    <button class="primary" id="xConvertAll" type="button">חלץ הכל</button>
+    <button id="xZipAll" type="button" disabled>הורד הכל (ZIP)</button>
+  </div>
+</div>
 <div class="transport gut" id="aBar" hidden>
   <div class="in col">
     <div class="sum" id="aSum"></div>
@@ -403,32 +469,36 @@ function cssVar(n){return getComputedStyle(document.documentElement).getProperty
 
 /* ---------- tabs ---------- */
 let curScreen=null;
+const SCREENS={
+  video:  {i:0,pane:'#pane-video',  bar:'#vBar',drop:'#vDrop',color:'#0E6F68',sub:'כיווץ וידאו לוואטסאפ · הכול רץ בטלפון, שום קובץ לא עולה לשרת'},
+  extract:{i:1,pane:'#pane-extract',bar:'#xBar',drop:'#xDrop',color:'#17606F',sub:'חילוץ שמע מסרטונים · הכול רץ בטלפון, שום קובץ לא עולה לשרת'},
+  audio:  {i:2,pane:'#pane-audio',  bar:'#aBar',drop:'#aDrop',color:'#2E6B3F',sub:'המרת אודיו · הכול רץ בטלפון, שום קובץ לא עולה לשרת'}
+};
 function showTab(name){
-  const v=name==='video';
+  if(!SCREENS[name])name='video';
   if(curScreen===name)return;
-  const first=curScreen===null;curScreen=name;
+  const prev=curScreen?SCREENS[curScreen].i:null;curScreen=name;
+  const S=SCREENS[name];
   document.body.dataset.screen=name;
-  $('#tab-video').setAttribute('aria-selected',v);$('#tab-audio').setAttribute('aria-selected',!v);
-  $('#pane-video').hidden=!v;$('#pane-audio').hidden=v;$('#vBar').hidden=!v;$('#aBar').hidden=v;
-  $('#screenSub').textContent=v?'כיווץ וידאו לוואטסאפ · הכול רץ בטלפון, שום קובץ לא עולה לשרת':'המרת אודיו · הכול רץ בטלפון, שום קובץ לא עולה לשרת';
-  document.querySelector('meta[name=theme-color]').setAttribute('content',v?'#0E6F68':'#2E6B3F');
-  if(!first){
-    const pane=v?$('#pane-video'):$('#pane-audio');
+  for(const k in SCREENS){const on=k===name;$('#tab-'+k).setAttribute('aria-selected',on);$(SCREENS[k].pane).hidden=!on;$(SCREENS[k].bar).hidden=!on;}
+  $('#screenSub').textContent=S.sub;
+  document.querySelector('meta[name=theme-color]').setAttribute('content',S.color);
+  if(prev!==null){
+    const pane=$(S.pane);
     pane.classList.remove('enter-l','enter-r');void pane.offsetWidth;
-    pane.classList.add(v?'enter-r':'enter-l');
+    pane.classList.add(S.i>prev?'enter-l':'enter-r');
     window.scrollTo({top:0});
   }
   try{localStorage.setItem('tab',name);}catch(e){}
-  if(!v)aItems.forEach(it=>{const r=aRows.get(it.id);if(r)drawWave(r.cv,it);});
+  if(name==='audio')aItems.forEach(it=>{const r=aRows.get(it.id);if(r)drawWave(r.cv,it);});
 }
-$('#tab-video').addEventListener('click',()=>showTab('video'));
-$('#tab-audio').addEventListener('click',()=>showTab('audio'));
+for(const k in SCREENS)$('#tab-'+k).addEventListener('click',()=>showTab(k));
 
-/* ---------- drag & drop (routes to the open tab) ---------- */
-['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();(curTab()==='video'?$('#vDrop'):$('#aDrop')).classList.add('over');}));
-['dragleave','drop'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();if(t==='drop'||e.target===document.documentElement){$('#vDrop').classList.remove('over');$('#aDrop').classList.remove('over');}}));
-document.addEventListener('drop',e=>{const fs=[...(e.dataTransfer?.files||[])];if(!fs.length)return;curTab()==='video'?vAdd(fs):aAdd(fs);});
-function curTab(){return $('#pane-video').hidden?'audio':'video';}
+/* ---------- drag & drop (routes to the open screen) ---------- */
+function curTab(){return curScreen||'video';}
+['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();$(SCREENS[curTab()].drop).classList.add('over');}));
+['dragleave','drop'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();if(t==='drop'||e.target===document.documentElement){for(const k in SCREENS)$(SCREENS[k].drop).classList.remove('over');}}));
+document.addEventListener('drop',e=>{const fs=[...(e.dataTransfer?.files||[])];if(!fs.length)return;const t=curTab();t==='video'?vAdd(fs):t==='extract'?xAdd(fs):aAdd(fs);});
 
 /* =====================================================
    VIDEO
@@ -870,10 +940,185 @@ $('#aZipAll').addEventListener('click',async()=>{
   saveBlob(makeZip(files),`audio-${as.format}-${files.length}.zip`);
 });
 
+/* =====================================================
+   EXTRACT AUDIO FROM VIDEO
+   ===================================================== */
+const xs={format:'m4a',kbps:192};
+try{const sv=JSON.parse(localStorage.getItem('xset')||'null');if(sv&&typeof sv==='object')Object.assign(xs,sv);}catch(e){}
+let xItems=[],xBusy=false;const xRows=new Map();
+const XFMT={m4a:{ext:'m4a',type:'audio/mp4',label:'M4A'},mp3:{ext:'mp3',type:'audio/mpeg',label:'MP3'},wav:{ext:'wav',type:'audio/wav',label:'WAV'}};
+const CODEC_NAMES={aac:'AAC',opus:'Opus',mp3:'MP3',vorbis:'Vorbis',flac:'FLAC',ac3:'AC-3',eac3:'E-AC-3'};
+
+function xSync(){
+  setRadio('xfmt',xs.format);setRadio('xkbps',xs.kbps);
+  $('#xRateField').hidden=xs.format!=='mp3';
+  $('#xNote').textContent=xs.format==='m4a'?'M4A מעתיק את השמע כמו שהוא, בלי לאבד איכות. הכי מהיר, ונפתח בכל טלפון.'
+    :xs.format==='mp3'?'MP3 מתאים לכל נגן ולכל מקום. 192 kbps מספיק לרוב השימושים.'
+    :'WAV לא דחוס, לעריכה בתוכנות שמע. הקובץ גדול בערך פי 10.';
+}
+function xChanged(){try{localStorage.setItem('xset',JSON.stringify(xs));}catch(e){}xSync();xItems.forEach(it=>{if(it.status==='done'){xDropOut(it);it.status='ready';}});xItems.forEach(xUpdateRow);xSum();}
+document.querySelectorAll('input[name=xfmt]').forEach(el=>el.addEventListener('change',()=>{xs.format=el.value;xChanged();}));
+document.querySelectorAll('input[name=xkbps]').forEach(el=>el.addEventListener('change',()=>{xs.kbps=+el.value;xChanged();}));
+
+function xEstimate(it){
+  if(xs.format==='m4a')return it.codec==='aac'?it.abps*it.dur/8:192000*it.dur/8;
+  if(xs.format==='mp3')return xs.kbps*1000*it.dur/8;
+  return (it.sr||48000)*Math.min(2,it.ch||2)*2*it.dur;
+}
+function xEnsureRow(it){
+  let r=xRows.get(it.id);if(r)return r;
+  const li=document.createElement('li');li.className='row';
+  li.innerHTML=`<div class="thumb"><video muted playsinline preload="metadata"></video></div>
+    <div class="meta"><div class="name"></div><div class="specs mono" dir="ltr"></div></div>
+    <div class="barline"><div class="meter"><i></i></div><span class="status"></span></div>
+    <div class="acts">
+      <button type="button" class="primary b-conv">חלץ</button>
+      <button type="button" class="b-cancel" hidden>עצור</button>
+      <button type="button" class="b-dl" hidden>הורד</button>
+      <button type="button" class="share b-sh" hidden>שתף</button>
+      <button type="button" class="ghost b-rm">הסר</button>
+    </div>
+    <audio controls preload="none" hidden></audio>`;
+  li.querySelector('.thumb video').src=it.url+'#t=0.1';
+  li.querySelector('.b-conv').addEventListener('click',()=>xConvertOne(it));
+  li.querySelector('.b-cancel').addEventListener('click',()=>{it.canceled=true;if(it.conv)it.conv.cancel().catch(()=>{});});
+  li.querySelector('.b-dl').addEventListener('click',()=>saveBlob(it.out.blob,it.out.name));
+  li.querySelector('.b-sh').addEventListener('click',()=>shareBlob(it.out.blob,it.out.name));
+  li.querySelector('.b-rm').addEventListener('click',()=>xRemove(it));
+  $('#xList').appendChild(li);
+  r={li,name:li.querySelector('.name'),specs:li.querySelector('.specs'),bar:li.querySelector('.meter i'),meter:li.querySelector('.meter'),status:li.querySelector('.status'),
+     conv:li.querySelector('.b-conv'),cancel:li.querySelector('.b-cancel'),dl:li.querySelector('.b-dl'),sh:li.querySelector('.b-sh'),rm:li.querySelector('.b-rm'),audio:li.querySelector('audio')};
+  xRows.set(it.id,r);return r;
+}
+function xUpdateRow(it){
+  const r=xEnsureRow(it);
+  r.name.textContent=it.name;
+  if(it.dur){
+    const src=`${fmtTime(it.dur)} · ${CODEC_NAMES[it.codec]||it.codec||'?'}${it.abps?' · '+Math.round(it.abps/1000)+' kbps':''}${it.ch?' · '+it.ch+'ch':''} · ${fmtSize(it.size)}`;
+    const f=XFMT[xs.format];
+    const how=xs.format==='m4a'?(it.codec==='aac'?'העתקה ללא איבוד':'AAC 192 kbps'):xs.format==='mp3'?xs.kbps+' kbps':'16-bit';
+    const dst=`${f.label} · ${how} · ${it.out?fmtSize(it.out.blob.size):'~'+fmtSize(Math.round(xEstimate(it)))}`;
+    r.specs.innerHTML='';r.specs.append(src,document.createElement('br'));const sp=document.createElement('span');sp.className='arrow';sp.textContent='→ '+dst;r.specs.append(sp);
+  }else r.specs.textContent=fmtSize(it.size);
+  let st,cls='status';
+  switch(it.status){
+    case 'probing':st='בודק את הקובץ…';break;
+    case 'loading':st='טוען מנוע…';break;
+    case 'ready':st='מוכן';break;
+    case 'converting':st=`מחלץ ${Math.round(it.progress*100)}%`;break;
+    case 'done':st='השמע מוכן';cls+=' done';break;
+    case 'error':st=it.error||'שגיאה';cls+=' err';break;
+  }
+  r.status.textContent=st;r.status.className=cls;
+  r.bar.style.width=(it.status==='done'?100:it.status==='converting'?it.progress*100:0)+'%';
+  r.meter.hidden=it.status==='error';
+  r.conv.hidden=it.status!=='ready';r.conv.disabled=xBusy;
+  r.cancel.hidden=it.status!=='converting';
+  r.dl.hidden=it.status!=='done';r.sh.hidden=!(it.status==='done'&&canShareFiles());
+  r.rm.hidden=it.status==='converting';
+  if(it.status==='done'&&it.out){if(r.audio.dataset.src!==it.out.url){r.audio.src=it.out.url;r.audio.dataset.src=it.out.url;}r.audio.hidden=false;}
+  else{r.audio.hidden=true;if(r.audio.dataset.src){r.audio.removeAttribute('src');delete r.audio.dataset.src;r.audio.load();}}
+}
+function xSum(){
+  const n=xItems.length,done=xItems.filter(i=>i.status==='done').length;
+  $('#xSum').innerHTML=n?`<b>${n}</b> סרטונים · <b>${done}</b> חולצו`:'אין סרטונים';
+  $('#xEmpty').hidden=n>0;
+  $('#xConvertAll').disabled=xBusy||!xItems.some(i=>i.status==='ready');
+  $('#xZipAll').disabled=xBusy||!done;
+}
+function xDropOut(it){if(it.out){URL.revokeObjectURL(it.out.url);it.out=null;}}
+function xRemove(it){xDropOut(it);URL.revokeObjectURL(it.url);const r=xRows.get(it.id);if(r){r.li.remove();xRows.delete(it.id);}xItems=xItems.filter(x=>x!==it);xSum();}
+$('#xClear').addEventListener('click',()=>{if(xBusy){toast('עצור קודם את החילוץ');return;}[...xItems].forEach(xRemove);});
+
+async function xAdd(files){
+  for(const f of files){
+    const it={id:++uid,file:f,name:f.name,size:f.size,url:URL.createObjectURL(f),status:MB?'probing':'loading',progress:0,out:null};
+    xItems.push(it);xUpdateRow(it);xSum();
+    try{
+      await loadMB();it.status='probing';xUpdateRow(it);
+      const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(f)});
+      const at=await input.getPrimaryAudioTrack();
+      if(!at)throw new Error('noaudio');
+      it.dur=await input.computeDuration();
+      try{it.codec=await at.getCodec();}catch(e){}
+      try{it.ch=await at.getNumberOfChannels();it.sr=await at.getSampleRate();}catch(e){}
+      try{it.abps=(await at.computePacketStats(150)).averageBitrate;}catch(e){}
+      if(!(await at.canDecode())&&it.codec!=='aac')throw new Error('nodecode');
+      if(input.dispose)input.dispose();
+      it.status='ready';
+    }catch(e){
+      it.status='error';
+      it.error=e.message==='noaudio'?'אין שמע בסרטון הזה.':e.message==='nodecode'?'הדפדפן לא יודע לפתוח את סוג השמע בסרטון הזה.':!MB?'לא הצלחתי לטעון את המנוע. בדוק חיבור לאינטרנט ונסה שוב.':'לא הצלחתי לקרוא את הקובץ.';
+    }
+    xUpdateRow(it);xSum();
+  }
+}
+['#xPick','#xPickFiles','#xPickMulti'].forEach(q=>$(q).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)xAdd(fs);}));
+
+async function xRun(it,format,onP){
+  const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
+  const wav=format==='wav';
+  const output=new MB.Output({format:wav?new MB.WavOutputFormat():new MB.Mp4OutputFormat({fastStart:'in-memory'}),target:new MB.BufferTarget()});
+  const audio=wav?{codec:'pcm-s16'}:(it.codec==='aac'?{}:{codec:'aac',bitrate:192000});
+  const conv=await MB.Conversion.init({input,output,video:{discard:true},audio});
+  if(!conv.isValid)throw new Error('invalid');
+  it.conv=conv;
+  conv.onProgress=onP;
+  await conv.execute();
+  if(it.canceled)throw new Error('canceled');
+  return output.target.buffer;
+}
+async function xConvertOne(it,fromAll){
+  if(it.status!=='ready'||(xBusy&&!fromAll))return;
+  if(xs.format==='mp3'&&!hasLame()){toast('מקודד ה-MP3 לא נטען. רענן את הדף, או בחר M4A.');return;}
+  if(!fromAll){xBusy=true;xItems.forEach(xUpdateRow);}
+  it.status='converting';it.progress=0;it.canceled=false;xUpdateRow(it);xSum();
+  const r=xRows.get(it.id);
+  const show=p=>{it.progress=p;if(r){r.bar.style.width=(p*100)+'%';r.status.textContent=`מחלץ ${Math.round(p*100)}%`;}};
+  try{
+    const f=XFMT[xs.format];let blob;
+    if(xs.format==='mp3'){
+      const buf=await xRun(it,'wav',p=>show(p*0.4));
+      it.conv=null;
+      let ab=await new Promise((res,rej)=>{const pr=getCtx().decodeAudioData(buf,res,rej);if(pr&&pr.catch)pr.catch(rej);});
+      if(ab.numberOfChannels>2||ab.sampleRate>48000){
+        const sr=ab.sampleRate>48000?48000:ab.sampleRate,oc=new OfflineAudioContext(Math.min(2,ab.numberOfChannels),Math.ceil(ab.duration*sr),sr);
+        const s=oc.createBufferSource();s.buffer=ab;s.connect(oc.destination);s.start();ab=await oc.startRendering();
+      }
+      blob=await encodeMp3(ab,xs.kbps,p=>{if(it.canceled)throw new Error('canceled');show(0.4+p*0.6);});
+    }else{
+      blob=new Blob([await xRun(it,xs.format,show)],{type:f.type});
+    }
+    if(it.canceled)throw new Error('canceled');
+    it.out={blob,name:baseName(it.name)+'.'+f.ext,url:URL.createObjectURL(blob)};
+    it.status='done';
+  }catch(e){
+    if(it.canceled){it.status='ready';toast('החילוץ נעצר');}
+    else{it.status='error';it.error='החילוץ נכשל'+(e&&e.message&&e.message!=='invalid'?': '+e.message:'')+'. נסה פורמט אחר.';}
+  }
+  it.conv=null;
+  if(!fromAll){xBusy=false;xItems.forEach(xUpdateRow);}else xUpdateRow(it);
+  xSum();
+}
+$('#xConvertAll').addEventListener('click',async()=>{
+  if(xBusy)return;
+  if(xs.format==='mp3'&&!hasLame()){toast('מקודד ה-MP3 לא נטען. רענן את הדף, או בחר M4A.');return;}
+  xBusy=true;xItems.forEach(xUpdateRow);xSum();
+  for(const it of xItems.filter(i=>i.status==='ready'))await xConvertOne(it,true);
+  xBusy=false;xItems.forEach(xUpdateRow);xSum();
+  const n=xItems.filter(i=>i.status==='done').length;if(n)toast(`${n} קובצי שמע מוכנים`);
+});
+$('#xZipAll').addEventListener('click',async()=>{
+  const done=xItems.filter(i=>i.status==='done'&&i.out);if(!done.length)return;
+  const used=new Set(),files=[];
+  for(const it of done){let n=it.out.name,k=2;while(used.has(n))n=baseName(it.out.name)+` (${k++}).`+XFMT[xs.format].ext;used.add(n);files.push({name:n,data:new Uint8Array(await it.out.blob.arrayBuffer())});}
+  saveBlob(makeZip(files),`audio-from-video-${files.length}.zip`);
+});
+
 /* ---------- start ---------- */
-syncVControls();vSum();renderQuality();aSum();
+syncVControls();vSum();renderQuality();aSum();xSync();xSum();
 let startTab='video';try{startTab=localStorage.getItem('tab')||'video';}catch(e){}
-if(location.hash==='#audio')startTab='audio';if(location.hash==='#video')startTab='video';
+if(['#audio','#video','#extract'].includes(location.hash))startTab=location.hash.slice(1);
 showTab(startTab);
 if(canVideo)setTimeout(()=>loadMB().catch(()=>{}),800);
 const mq=window.matchMedia('(prefers-color-scheme: dark)');if(mq.addEventListener)mq.addEventListener('change',()=>aItems.forEach(it=>{const r=aRows.get(it.id);if(r)drawWave(r.cv,it);}));
