@@ -46,9 +46,6 @@
 body[data-screen="audio"]{--band:#2E6B3F;--band-2:#1F5231}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}}
 :root[data-theme="dark"] body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}
-body[data-screen="extract"]{--band:#17606F;--band-2:#104A57}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body[data-screen="extract"]{--band:#123F49;--band-2:#0D323A}}
-:root[data-theme="dark"] body[data-screen="extract"]{--band:#123F49;--band-2:#0D323A}
 @keyframes inFromLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
 @keyframes inFromRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 main.enter-l{animation:inFromLeft .28s ease both}
@@ -102,6 +99,7 @@ main{display:flex;flex-direction:column;gap:16px;padding-top:18px}
 
 /* presets */
 .presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.preset.wide{grid-column:1/-1}
 .preset{position:relative;text-align:right;border:1.5px solid var(--line);background:var(--surface-2);border-radius:12px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;font:inherit;color:var(--ink)}
 .preset:hover{border-color:var(--accent)}
 .preset[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
@@ -126,7 +124,8 @@ legend{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);pa
 .seg label{position:relative}
 .seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
 .seg span{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-family:var(--mono);font-size:13px;background:var(--surface-2);color:var(--ink);transition:background .12s,border-color .12s}
-.seg span.he{font-family:var(--body);font-size:14px;padding:5px 12px}
+.seg span{unicode-bidi:isolate;direction:ltr}
+.seg span.he{direction:rtl;font-family:var(--body);font-size:14px;padding:5px 12px}
 .seg input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
 .range{display:flex;align-items:center;gap:10px}
@@ -208,8 +207,6 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
     <div class="tabs" role="tablist" aria-label="סוג קובץ">
       <button role="tab" id="tab-video" aria-selected="true" aria-controls="pane-video" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>וידאו</button>
-      <button role="tab" id="tab-extract" aria-selected="false" aria-controls="pane-extract" type="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="12" height="10" rx="2"/><path d="M14 7.5l4-2v7l-4-2"/><path d="M8 17v3M12 16v4M16 18v2M4 18v2"/></svg>חילוץ שמע</button>
       <button role="tab" id="tab-audio" aria-selected="false" aria-controls="pane-audio" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>אודיו</button>
     </div>
@@ -244,8 +241,9 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
       <div class="presets" id="presets">
         <div role="button" tabindex="0" class="preset" data-p="wa" aria-pressed="true"><b>וואטסאפ בלי טשטוש</b><span class="spec" dir="ltr">540p · 1500 kbps</span><span class="d">כמו האפליקציה שעבדה לך. נקודת התחלה מומלצת</span></div>
         <div role="button" tabindex="0" class="preset" data-p="hd" aria-pressed="false"><b>וואטסאפ HD</b><span class="spec" dir="ltr">720p · 2000 kbps</span><span class="d">חד יותר, וואטסאפ עלול לכווץ שוב</span></div>
+        <div role="button" tabindex="0" class="preset" data-p="iph" aria-pressed="false"><b>אייפון 1080p</b><span class="spec" dir="ltr">1080p · 30fps · 4500 kbps</span><span class="d">לפי המדריך. לבדוק מול 540p</span></div>
         <div role="button" tabindex="0" class="preset" data-p="lite" aria-pressed="false"><b>קל במיוחד</b><span class="spec" dir="ltr">480p · 900 kbps</span><span class="d">לסרטונים ארוכים</span></div>
-        <div role="button" tabindex="0" class="preset" data-p="size" aria-pressed="false"><b>לפי גודל קובץ</b><span class="spec" dir="ltr">auto kbps</span><span class="d">הקצב מחושב לפי האורך</span>
+        <div role="button" tabindex="0" class="preset wide" data-p="size" aria-pressed="false"><b>לפי גודל קובץ</b><span class="spec" dir="ltr">auto kbps</span><span class="d">הקצב מחושב לפי האורך</span>
           <span class="sizebox"><span>עד</span><input type="number" id="vTargetMB" min="2" max="500" step="1" value="16" inputmode="numeric" aria-label="גודל יעד במגה-בייט"><span>MB</span></span></div>
       </div>
 
@@ -276,6 +274,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
               </div>
             </div>
             <div class="range"><input type="range" id="vKbpsRange" min="300" max="8000" step="10" value="1500" aria-label="ביט רייט"></div>
+            <label class="check"><input type="checkbox" id="vSdr" checked><span>המרת HDR של אייפון ל-SDR רגיל (מומלץ לוואטסאפ, מונע צבעים דהויים)</span></label>
             <label class="check"><input type="checkbox" id="vCbr"><span>קצב קבוע (CBR): הקובץ יוצא קרוב יותר למספר שבחרת</span></label>
           </fieldset>
           <fieldset>
@@ -292,13 +291,14 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
             <div class="seg">
               <label><input type="radio" name="vaud" id="vaud-keep" value="keep" checked><span class="he">מקור</span></label>
               <label><input type="radio" name="vaud" id="vaud-128" value="128"><span>128k</span></label>
+              <label><input type="radio" name="vaud" id="vaud-160" value="160"><span>160k</span></label>
               <label><input type="radio" name="vaud" id="vaud-96" value="96"><span>96k</span></label>
               <label><input type="radio" name="vaud" id="vaud-none" value="none"><span class="he">בלי</span></label>
             </div>
           </fieldset>
         </div>
       </details>
-      <p class="tip"><b>איך מכיילים:</b> ליד כל סרטון מופיע הביט רייט של המקור ושל התוצאה. אם וואטסאפ עדיין מטשטש, הורד את הביט רייט ב-200–300, או ירד ברזולוציה, ונסה שוב. כשתמצא מספר שעובד, הוא יישמר לפעם הבאה.</p>
+      <p class="tip"><b>איך מכיילים:</b> ליד כל סרטון מופיע הביט רייט של המקור ושל התוצאה. אם וואטסאפ עדיין מטשטש, הורד את הביט רייט ב-200–300, או ירד ברזולוציה, ונסה שוב. כשתמצא מספר שעובד, הוא יישמר לפעם הבאה. לאפס דחיסה: שלח בוואטסאפ דרך + ← מסמך (הנמען מקבל קובץ להורדה).</p>
     </section>
 
     <section class="card">
@@ -309,68 +309,26 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
   </div>
 </main>
 
-<!-- ================= EXTRACT ================= -->
-<main class="gut" id="pane-extract" role="tabpanel" aria-labelledby="tab-extract" hidden>
-  <div class="col" style="display:flex;flex-direction:column;gap:16px">
-    <div class="pickwrap">
-      <label class="drop" id="xDrop">
-        <input type="file" id="xPick" accept="video/*">
-        <span class="plus" aria-hidden="true">+</span>
-        <strong>בחר סרטון לחילוץ השמע</strong>
-        <span class="hint">השמע יוצא כקובץ נפרד, הסרטון עצמו לא משתנה</span>
-      </label>
-      <label class="pick-alt">
-        <input type="file" id="xPickFiles" multiple accept=".mp4,.mov,.m4v,.webm,.mkv,.3gp">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-        <span>מאפליקציית הקבצים (גם כמה סרטונים יחד)</span>
-      </label>
-      <label class="pick-old">
-        <input type="file" id="xPickMulti" multiple accept="video/*,.mp4,.mov,.m4v,.webm,.mkv">
-        <span>או: כמה סרטונים מהגלריה (השיטה הקודמת)</span>
-      </label>
-    </div>
-
-    <section class="card" aria-label="פורמט השמע">
-      <div class="card-h"><span class="chip-title t-green"><i>1</i>פורמט השמע</span></div>
-      <div class="grid2" style="margin-top:0">
-        <fieldset>
-          <legend>פורמט</legend>
-          <div class="seg">
-            <label><input type="radio" name="xfmt" id="xfmt-m4a" value="m4a" checked><span>M4A</span></label>
-            <label><input type="radio" name="xfmt" id="xfmt-mp3" value="mp3"><span>MP3</span></label>
-            <label><input type="radio" name="xfmt" id="xfmt-wav" value="wav"><span>WAV</span></label>
-          </div>
-        </fieldset>
-        <fieldset id="xRateField">
-          <legend>קצב MP3</legend>
-          <div class="seg">
-            <label><input type="radio" name="xkbps" id="xkbps-128" value="128"><span>128 kbps</span></label>
-            <label><input type="radio" name="xkbps" id="xkbps-192" value="192" checked><span>192 kbps</span></label>
-            <label><input type="radio" name="xkbps" id="xkbps-256" value="256"><span>256 kbps</span></label>
-            <label><input type="radio" name="xkbps" id="xkbps-320" value="320"><span>320 kbps</span></label>
-          </div>
-        </fieldset>
-      </div>
-      <p class="tip" id="xNote"></p>
-    </section>
-
-    <section class="card">
-      <div class="card-h"><span class="chip-title t-amber"><i>2</i>הסרטונים שלך</span><button class="ghost" id="xClear" type="button">נקה</button></div>
-      <ul class="tracks" id="xList"></ul>
-      <p class="empty" id="xEmpty">עוד אין סרטונים. בחר סרטון למעלה.</p>
-    </section>
-  </div>
-</main>
-
 <!-- ================= AUDIO ================= -->
 <main class="gut" id="pane-audio" role="tabpanel" aria-labelledby="tab-audio" hidden>
   <div class="col" style="display:flex;flex-direction:column;gap:16px">
-    <label class="drop" id="aDrop">
-      <input type="file" id="aPick" multiple accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.flac,.webm">
-      <span class="plus" aria-hidden="true">+</span>
-      <strong>בחר קובצי אודיו</strong>
-      <span class="hint">MP3 · WAV · M4A · OGG · FLAC · וגם פס קול מסרטון</span>
-    </label>
+    <div class="pickwrap">
+      <label class="drop" id="aDrop">
+        <input type="file" id="aPick" multiple accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.flac">
+        <span class="plus" aria-hidden="true">+</span>
+        <strong>בחר קובצי אודיו</strong>
+        <span class="hint">MP3 · WAV · M4A · OGG · FLAC</span>
+      </label>
+      <label class="pick-alt">
+        <input type="file" id="aPickVideo" accept="video/*">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
+        <span>חלץ שמע מסרטון (גלריה)</span>
+      </label>
+      <label class="pick-old">
+        <input type="file" id="aPickVideoFiles" multiple accept=".mp4,.mov,.m4v,.webm,.mkv,.3gp">
+        <span>או: כמה סרטונים מאפליקציית הקבצים</span>
+      </label>
+    </div>
 
     <section class="card" aria-label="הגדרות אודיו">
       <div class="card-h"><span class="chip-title t-green"><i>1</i>הגדרות</span></div>
@@ -391,8 +349,8 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
           <div class="seg">
             <label><input type="radio" name="rate" id="rate-22" value="22050"><span>22.05 kHz</span></label>
             <label><input type="radio" name="rate" id="rate-32" value="32000"><span>32 kHz</span></label>
-            <label><input type="radio" name="rate" id="rate-44" value="44100" checked><span>44.1 kHz</span></label>
-            <label><input type="radio" name="rate" id="rate-48" value="48000"><span>48 kHz</span></label>
+            <label><input type="radio" name="rate" id="rate-44" value="44100"><span>44.1 kHz</span></label>
+            <label><input type="radio" name="rate" id="rate-48" value="48000" checked><span>48 kHz</span></label>
           </div>
         </fieldset>
         <fieldset>
@@ -422,13 +380,6 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
   <div class="in col">
     <div class="sum" id="vSum"></div>
     <button class="primary" id="vConvertAll" type="button">כווץ הכל</button>
-  </div>
-</div>
-<div class="transport gut" id="xBar" hidden>
-  <div class="in col">
-    <div class="sum" id="xSum"></div>
-    <button class="primary" id="xConvertAll" type="button">חלץ הכל</button>
-    <button id="xZipAll" type="button" disabled>הורד הכל (ZIP)</button>
   </div>
 </div>
 <div class="transport gut" id="aBar" hidden>
@@ -471,10 +422,10 @@ function cssVar(n){return getComputedStyle(document.documentElement).getProperty
 let curScreen=null;
 const SCREENS={
   video:  {i:0,pane:'#pane-video',  bar:'#vBar',drop:'#vDrop',color:'#0E6F68',sub:'כיווץ וידאו לוואטסאפ · הכול רץ בטלפון, שום קובץ לא עולה לשרת'},
-  extract:{i:1,pane:'#pane-extract',bar:'#xBar',drop:'#xDrop',color:'#17606F',sub:'חילוץ שמע מסרטונים · הכול רץ בטלפון, שום קובץ לא עולה לשרת'},
-  audio:  {i:2,pane:'#pane-audio',  bar:'#aBar',drop:'#aDrop',color:'#2E6B3F',sub:'המרת אודיו · הכול רץ בטלפון, שום קובץ לא עולה לשרת'}
+  audio:  {i:1,pane:'#pane-audio',  bar:'#aBar',drop:'#aDrop',color:'#2E6B3F',sub:'המרת אודיו וחילוץ שמע מסרטונים · הכול רץ בטלפון'}
 };
 function showTab(name){
+  if(name==='extract')name='audio';
   if(!SCREENS[name])name='video';
   if(curScreen===name)return;
   const prev=curScreen?SCREENS[curScreen].i:null;curScreen=name;
@@ -498,7 +449,7 @@ for(const k in SCREENS)$('#tab-'+k).addEventListener('click',()=>showTab(k));
 function curTab(){return curScreen||'video';}
 ['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();$(SCREENS[curTab()].drop).classList.add('over');}));
 ['dragleave','drop'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();if(t==='drop'||e.target===document.documentElement){for(const k in SCREENS)$(SCREENS[k].drop).classList.remove('over');}}));
-document.addEventListener('drop',e=>{const fs=[...(e.dataTransfer?.files||[])];if(!fs.length)return;const t=curTab();t==='video'?vAdd(fs):t==='extract'?xAdd(fs):aAdd(fs);});
+document.addEventListener('drop',e=>{const fs=[...(e.dataTransfer?.files||[])];if(!fs.length)return;curTab()==='video'?vAdd(fs):aAdd(fs);});
 
 /* =====================================================
    VIDEO
@@ -509,8 +460,8 @@ function loadMB(){if(MB)return Promise.resolve(MB);if(!mbLoading)mbLoading=impor
 const canVideo=typeof window.VideoEncoder!=='undefined'&&typeof window.VideoDecoder!=='undefined';
 if(!canVideo)$('#vUnsupported').hidden=false;
 
-const PRESETS={wa:{res:540,kbps:1500,fps:'orig'},hd:{res:720,kbps:2000,fps:30},lite:{res:480,kbps:900,fps:30},size:{res:720,kbps:null,fps:30}};
-const vs={preset:'wa',res:540,kbps:1500,fps:'orig',audio:'keep',targetMB:16,cbr:false};
+const PRESETS={wa:{res:540,kbps:1500,fps:'orig'},hd:{res:720,kbps:2000,fps:30},iph:{res:1080,kbps:4500,fps:30},lite:{res:480,kbps:900,fps:30},size:{res:720,kbps:null,fps:30}};
+const vs={preset:'wa',res:540,kbps:1500,fps:'orig',audio:'keep',targetMB:16,cbr:false,sdr:true};
 try{const saved=JSON.parse(localStorage.getItem('vset')||'null');if(saved&&typeof saved==='object')Object.assign(vs,saved);}catch(e){}
 function saveV(){try{localStorage.setItem('vset',JSON.stringify(vs));}catch(e){}}
 let vItems=[],vBusy=false;const vRows=new Map();
@@ -526,7 +477,7 @@ function syncVControls(){
   document.querySelectorAll('input[name=vkq]').forEach(el=>el.checked=!auto&&+el.value===vs.kbps);
   ['#vKbps','#vKbpsRange'].forEach(q=>$(q).disabled=auto);
   document.querySelectorAll('input[name=vkq]').forEach(el=>el.disabled=auto);
-  $('#vCbr').checked=!!vs.cbr;
+  $('#vCbr').checked=!!vs.cbr;$('#vSdr').checked=vs.sdr!==false;
   $('#vTargetMB').value=vs.targetMB;
 }
 function vChanged(){saveV();vItems.forEach(it=>{if(it.status==='done'){vDropOut(it);it.status='ready';}});vItems.forEach(vUpdateRow);vSum();}
@@ -550,6 +501,7 @@ $('#vKbps').addEventListener('input',e=>{const v=+e.target.value;if(v>=200&&v<=2
 $('#vKbpsRange').addEventListener('input',e=>setKbps(e.target.value));
 document.querySelectorAll('input[name=vkq]').forEach(el=>el.addEventListener('change',()=>setKbps(el.value)));
 $('#vCbr').addEventListener('change',e=>{vs.cbr=e.target.checked;vChanged();});
+$('#vSdr').addEventListener('change',e=>{vs.sdr=e.target.checked;vChanged();});
 
 const even=n=>Math.max(2,Math.round(n/2)*2);
 function vPlan(it){
@@ -598,10 +550,11 @@ function vUpdateRow(it){
     const kb=b=>Math.round(b/1000)+' kbps';
     const srcRate=it.size*8/Math.max(0.1,it.dur);
     const outFps=p.fps||it.fps;
-    const src=`${fmtTime(it.dur)} · ${it.w}×${it.h}${it.fps?' · '+Math.round(it.fps)+'fps':''} · ${kb(srcRate)} · ${fmtSize(it.size)}`;
+    const src=`${fmtTime(it.dur)} · ${it.w}×${it.h}${it.fps?' · '+Math.round(it.fps)+'fps':''}${it.hdr?' · HDR':''} · ${kb(srcRate)} · ${fmtSize(it.size)}`;
+    const sdrTag=it.hdr&&vs.sdr!==false?' · SDR':'';
     const dst=it.out
-      ?`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''} · ${kb(it.out.blob.size*8/Math.max(0.1,it.dur))} בפועל · ${fmtSize(it.out.blob.size)}`
-      :`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''} · ${kb(p.vbps+p.abps)} · ~${fmtSize(p.est)}`;
+      ?`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''}${sdrTag} · ${kb(it.out.blob.size*8/Math.max(0.1,it.dur))} בפועל · ${fmtSize(it.out.blob.size)}`
+      :`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''}${sdrTag} · ${kb(p.vbps+p.abps)} · ~${fmtSize(p.est)}`;
     r.specs.innerHTML='';r.specs.append(src,document.createElement('br'));const s=document.createElement('span');s.className='arrow';s.textContent='→ '+dst;r.specs.append(s);
     it.lighter=!it.out&&p.est>=it.size*0.97;
   }else r.specs.textContent=fmtSize(it.size);
@@ -647,6 +600,7 @@ async function vAdd(files){
       it.w=await vt.getDisplayWidth();it.h=await vt.getDisplayHeight();
       it.dur=await input.computeDuration();
       try{it.fps=(await vt.computePacketStats(90)).averagePacketRate;}catch(e){it.fps=null;}
+      try{it.hdr=await vt.hasHighDynamicRange();}catch(e){it.hdr=false;}
       const at=await input.getPrimaryAudioTrack();it.hasAudio=!!at;
       if(at){try{it.abps=(await at.computePacketStats(150)).averageBitrate;}catch(e){}}
       if(!(await vt.canDecode()))throw new Error('nodecode');
@@ -668,6 +622,16 @@ async function vRunOnce(it,p,opt){
   if(MB.Quality)video.quality=new MB.Quality({bitrate:p.vbps,bitrateMode:opt.cbr?'constant':'variable'});else video.bitrate=p.vbps;
   if(p.resize){if(it.w<=it.h)video.width=p.ow;else video.height=p.oh;}
   if(opt.fps)video.frameRate=opt.fps;
+  if(it.hdr&&vs.sdr!==false&&opt.sdr!==false&&typeof OffscreenCanvas!=='undefined'){
+    // drawing an HDR frame onto a normal (sRGB) canvas makes the browser tone-map it to SDR
+    let ctx=null;
+    video.process=sample=>{
+      const w=sample.displayWidth,h=sample.displayHeight;
+      if(!ctx||ctx.canvas.width!==w||ctx.canvas.height!==h){ctx=new OffscreenCanvas(w,h).getContext('2d',{colorSpace:'srgb',alpha:false});}
+      sample.draw(ctx,0,0);
+      return ctx.canvas;
+    };
+  }
   const audio=vs.audio==='none'?{discard:true}:vs.audio==='keep'?{}:{codec:'aac',bitrate:(+vs.audio)*1000};
   const conv=await MB.Conversion.init({input,output,video,audio});
   if(!conv.isValid){
@@ -691,6 +655,7 @@ async function vConvertOne(it,fromAll){
   const tries=[{cbr:vs.cbr,fps:p.fps,note:''}];
   if(vs.cbr)tries.push({cbr:false,fps:p.fps,note:'המכשיר לא תומך בקצב קבוע, נעשה שימוש בקצב משתנה'});
   if(!p.fps&&it.fps>61)tries.push({cbr:false,fps:60,note:'המכשיר לא הצליח לקודד '+Math.round(it.fps)+'fps, ירדתי ל-60'});
+  if(it.hdr&&vs.sdr!==false)tries.push({cbr:false,fps:p.fps||(it.fps>61?60:null),sdr:false,note:'המרת HDR ל-SDR לא הצליחה במכשיר הזה, הסרטון כווץ בלי המרה'});
   let lastErr=null;
   for(const t of tries){
     try{
@@ -726,7 +691,9 @@ $('#vConvertAll').addEventListener('click',async()=>{
 /* =====================================================
    AUDIO
    ===================================================== */
-const as={format:'mp3',kbps:192,depth:16,rate:44100,channels:'keep'};
+const as={format:'mp3',kbps:320,depth:16,rate:48000,channels:'keep'};
+try{const sv=JSON.parse(localStorage.getItem('aset2')||'null');if(sv&&typeof sv==='object')Object.assign(as,sv);}catch(e){}
+function aSyncControls(){setRadio('fmt',as.format);setRadio('rate',as.rate);setRadio('chan',as.channels);}
 let aItems=[],aBusy=false,actx=null;const aRows=new Map();
 const hasLame=()=>typeof window.lamejs!=='undefined';
 
@@ -737,17 +704,18 @@ function renderQuality(){
     q.innerHTML=[128,192,256,320].map(k=>`<label><input type="radio" name="q" id="q-${k}" value="${k}" ${k===as.kbps?'checked':''}><span>${k} kbps</span></label>`).join('');
   }else{
     $('#qLegend').textContent='עומק סיביות';
-    q.innerHTML=[16,24].map(d=>`<label><input type="radio" name="q" id="q-d${d}" value="${d}" ${d===as.depth?'checked':''}><span>${d}-bit</span></label>`).join('');
+    q.innerHTML=[16,24].map(d=>`<label><input type="radio" name="q" id="q-d${d}" value="${d}" ${d===as.depth?'checked':''}><span>${d}-bit${d===16?' · X32':''}</span></label>`).join('');
   }
   let note;
   if(as.format==='mp3'&&!hasLame())note='מקודד ה-MP3 לא נטען. בדוק חיבור לאינטרנט ורענן, או בחר WAV.';
   else if(as.format==='mp3'&&as.rate===22050&&as.kbps>160)note='ב-22.05 kHz קצב ה-MP3 מוגבל ל-160 kbps, וזה מה שיקודד.';
-  else if(as.format==='mp3')note='192 kbps מתאים לרוב השימושים. 320 kbps לאיכות מרבית.';
-  else note='WAV לא דחוס: איכות מלאה, קובץ גדול בערך פי 10 מ-MP3.';
+  else if(as.format==='mp3')note='320 kbps היא האיכות הגבוהה ביותר ב-MP3. 192 kbps מספיק לרוב השימושים ויוצא קטן יותר.';
+  else if(as.depth===16)note='להשמעה מ-USB במיקסר X32: WAV 16-bit, וקצב דגימה זהה למיקסר (בדרך כלל 48 kHz).';
+  else note='24-bit מתאים לעריכה ולתוכנות הקלטה. לנגן ה-USB של X32 בחר 16-bit.';
   if(as.channels==='split')note+=' פיצול: כל ערוץ יוצא כקובץ מונו נפרד, עם L או R בסוף השם.';
   $('#setNote').textContent=note;
 }
-function aChanged(){aItems.forEach(it=>{if(it.status==='done'){aDropOut(it);it.status='ready';}});renderQuality();aItems.forEach(aUpdateRow);aSum();}
+function aChanged(){try{localStorage.setItem('aset2',JSON.stringify(as));}catch(e){}aItems.forEach(it=>{if(it.status==='done'){aDropOut(it);it.status='ready';}});renderQuality();aItems.forEach(aUpdateRow);aSum();}
 document.querySelectorAll('input[name=fmt]').forEach(el=>el.addEventListener('change',()=>{as.format=el.value;aChanged();}));
 document.querySelectorAll('input[name=rate]').forEach(el=>el.addEventListener('change',()=>{as.rate=+el.value;aChanged();}));
 document.querySelectorAll('input[name=chan]').forEach(el=>el.addEventListener('change',()=>{as.channels=el.value;aChanged();}));
@@ -793,13 +761,13 @@ function aEnsureRow(it){
 function aUpdateRow(it){
   const r=aEnsureRow(it);
   r.name.textContent=it.name;
-  if(it.sample){const t=document.createElement('span');t.className='tag';t.textContent='דוגמה';r.name.appendChild(t);}
+  if(it.sample||it.fromVideo){const t=document.createElement('span');t.className='tag';t.textContent=it.fromVideo?'מסרטון':'דוגמה';r.name.appendChild(t);}
   if(it.buffer){
     const b=it.buffer,ch=outChannels(b.numberOfChannels),split=isSplit(it),out=it.outs?fmtSize(outSize(it)):'~'+fmtSize(estimate(it)*(split?2:1));
     r.specs.innerHTML='';r.specs.append(`${fmtTime(b.duration)} · ${b.numberOfChannels}ch · ${fmtSize(it.size)}`,document.createElement('br'));
     const s=document.createElement('span');s.className='arrow';s.textContent=`→ ${split?'2 × ':''}${targetLabel()} · ${as.rate/1000} kHz · ${ch}ch · ${out}`;r.specs.append(s);
   }else r.specs.textContent=fmtSize(it.size);
-  const st={decoding:'מפענח…',ready:(as.channels==='split'&&it.buffer&&it.buffer.numberOfChannels<2)?'הקובץ כבר מונו, ייצא קובץ אחד':'מוכן להמרה',converting:`ממיר ${Math.round(it.progress*100)}%`,done:'הומר',error:it.error||'שגיאה'}[it.status];
+  const st={decoding:it.fromVideo?'מחלץ שמע מהסרטון…':'מפענח…',ready:(as.channels==='split'&&it.buffer&&it.buffer.numberOfChannels<2)?'הקובץ כבר מונו, ייצא קובץ אחד':'מוכן להמרה',converting:`ממיר ${Math.round(it.progress*100)}%`,done:'הומר',error:it.error||'שגיאה'}[it.status];
   r.status.textContent=st;r.status.className='status'+(it.status==='done'?' done':it.status==='error'?' err':'');
   r.bar.style.width=(it.status==='done'?100:it.status==='converting'?it.progress*100:0)+'%';
   r.meter.hidden=it.status==='error';
@@ -837,19 +805,41 @@ function aDropOut(it){if(it.outs){it.outs.forEach(o=>URL.revokeObjectURL(o.url))
 function aRemove(it){aDropOut(it);const r=aRows.get(it.id);if(r){r.li.remove();aRows.delete(it.id);}aItems=aItems.filter(x=>x!==it);aSum();}
 $('#aClear').addEventListener('click',()=>{[...aItems].forEach(aRemove);});
 
+function decodeBuf(ab){return new Promise((res,rej)=>{const p=getCtx().decodeAudioData(ab,res,rej);if(p&&p.catch)p.catch(rej);});}
+async function videoToWav(file,onP){
+  await loadMB();
+  const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(file)});
+  const at=await input.getPrimaryAudioTrack();
+  if(!at)throw new Error('noaudio');
+  const output=new MB.Output({format:new MB.WavOutputFormat(),target:new MB.BufferTarget()});
+  const conv=await MB.Conversion.init({input,output,video:{discard:true},audio:{codec:'pcm-s24'}});
+  if(!conv.isValid)throw new Error('invalid');
+  conv.onProgress=onP;
+  await conv.execute();
+  return output.target.buffer;
+}
 async function aAdd(files){
   for(const f of files){
     const it={id:++uid,name:f.name,size:f.size,buffer:null,peaks:null,status:'decoding',progress:0,outs:null};
     aItems.push(it);aUpdateRow(it);aSum();
+    const isVid=/^video\//.test(f.type)||/\.(mp4|mov|m4v|mkv|webm|3gp)$/i.test(f.name);
+    it.fromVideo=isVid;
     try{
-      const ab=await f.arrayBuffer();
-      const buf=await new Promise((res,rej)=>{const p=getCtx().decodeAudioData(ab,res,rej);if(p&&p.catch)p.catch(rej);});
+      let buf=null;
+      if(isVid&&canVideo){ // pull the sound track out of the video, then decode it
+        try{buf=await decodeBuf(await videoToWav(f,p=>{it.progress=p;const r=aRows.get(it.id);if(r)r.status.textContent=`מחלץ שמע מהסרטון ${Math.round(p*100)}%`;}));}
+        catch(e){if(e&&e.message==='noaudio')throw e;buf=null;}
+      }
+      if(!buf)buf=await decodeBuf(await f.arrayBuffer());
       it.buffer=buf;it.peaks=peaks(buf,40);it.status='ready';
-    }catch(e){it.status='error';it.error='הדפדפן לא הצליח לפענח את הקובץ. נסה MP3, WAV, M4A, OGG או FLAC.';}
+    }catch(e){
+      it.status='error';
+      it.error=e&&e.message==='noaudio'?'אין שמע בסרטון הזה.':isVid?'לא הצלחתי לחלץ שמע מהסרטון הזה.':'הדפדפן לא הצליח לפענח את הקובץ. נסה MP3, WAV, M4A, OGG או FLAC.';
+    }
     aUpdateRow(it);aSum();
   }
 }
-$('#aPick').addEventListener('change',e=>{aAdd([...e.target.files]);e.target.value='';});
+['#aPick','#aPickVideo','#aPickVideoFiles'].forEach(q=>$(q).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)aAdd(fs);}));
 
 async function resample(buf,only){
   const rate=as.rate,len=Math.max(1,Math.ceil(buf.duration*rate));
@@ -940,183 +930,8 @@ $('#aZipAll').addEventListener('click',async()=>{
   saveBlob(makeZip(files),`audio-${as.format}-${files.length}.zip`);
 });
 
-/* =====================================================
-   EXTRACT AUDIO FROM VIDEO
-   ===================================================== */
-const xs={format:'m4a',kbps:192};
-try{const sv=JSON.parse(localStorage.getItem('xset')||'null');if(sv&&typeof sv==='object')Object.assign(xs,sv);}catch(e){}
-let xItems=[],xBusy=false;const xRows=new Map();
-const XFMT={m4a:{ext:'m4a',type:'audio/mp4',label:'M4A'},mp3:{ext:'mp3',type:'audio/mpeg',label:'MP3'},wav:{ext:'wav',type:'audio/wav',label:'WAV'}};
-const CODEC_NAMES={aac:'AAC',opus:'Opus',mp3:'MP3',vorbis:'Vorbis',flac:'FLAC',ac3:'AC-3',eac3:'E-AC-3'};
-
-function xSync(){
-  setRadio('xfmt',xs.format);setRadio('xkbps',xs.kbps);
-  $('#xRateField').hidden=xs.format!=='mp3';
-  $('#xNote').textContent=xs.format==='m4a'?'M4A מעתיק את השמע כמו שהוא, בלי לאבד איכות. הכי מהיר, ונפתח בכל טלפון.'
-    :xs.format==='mp3'?'MP3 מתאים לכל נגן ולכל מקום. 192 kbps מספיק לרוב השימושים.'
-    :'WAV לא דחוס, לעריכה בתוכנות שמע. הקובץ גדול בערך פי 10.';
-}
-function xChanged(){try{localStorage.setItem('xset',JSON.stringify(xs));}catch(e){}xSync();xItems.forEach(it=>{if(it.status==='done'){xDropOut(it);it.status='ready';}});xItems.forEach(xUpdateRow);xSum();}
-document.querySelectorAll('input[name=xfmt]').forEach(el=>el.addEventListener('change',()=>{xs.format=el.value;xChanged();}));
-document.querySelectorAll('input[name=xkbps]').forEach(el=>el.addEventListener('change',()=>{xs.kbps=+el.value;xChanged();}));
-
-function xEstimate(it){
-  if(xs.format==='m4a')return it.codec==='aac'?it.abps*it.dur/8:192000*it.dur/8;
-  if(xs.format==='mp3')return xs.kbps*1000*it.dur/8;
-  return (it.sr||48000)*Math.min(2,it.ch||2)*2*it.dur;
-}
-function xEnsureRow(it){
-  let r=xRows.get(it.id);if(r)return r;
-  const li=document.createElement('li');li.className='row';
-  li.innerHTML=`<div class="thumb"><video muted playsinline preload="metadata"></video></div>
-    <div class="meta"><div class="name"></div><div class="specs mono" dir="ltr"></div></div>
-    <div class="barline"><div class="meter"><i></i></div><span class="status"></span></div>
-    <div class="acts">
-      <button type="button" class="primary b-conv">חלץ</button>
-      <button type="button" class="b-cancel" hidden>עצור</button>
-      <button type="button" class="b-dl" hidden>הורד</button>
-      <button type="button" class="share b-sh" hidden>שתף</button>
-      <button type="button" class="ghost b-rm">הסר</button>
-    </div>
-    <audio controls preload="none" hidden></audio>`;
-  li.querySelector('.thumb video').src=it.url+'#t=0.1';
-  li.querySelector('.b-conv').addEventListener('click',()=>xConvertOne(it));
-  li.querySelector('.b-cancel').addEventListener('click',()=>{it.canceled=true;if(it.conv)it.conv.cancel().catch(()=>{});});
-  li.querySelector('.b-dl').addEventListener('click',()=>saveBlob(it.out.blob,it.out.name));
-  li.querySelector('.b-sh').addEventListener('click',()=>shareBlob(it.out.blob,it.out.name));
-  li.querySelector('.b-rm').addEventListener('click',()=>xRemove(it));
-  $('#xList').appendChild(li);
-  r={li,name:li.querySelector('.name'),specs:li.querySelector('.specs'),bar:li.querySelector('.meter i'),meter:li.querySelector('.meter'),status:li.querySelector('.status'),
-     conv:li.querySelector('.b-conv'),cancel:li.querySelector('.b-cancel'),dl:li.querySelector('.b-dl'),sh:li.querySelector('.b-sh'),rm:li.querySelector('.b-rm'),audio:li.querySelector('audio')};
-  xRows.set(it.id,r);return r;
-}
-function xUpdateRow(it){
-  const r=xEnsureRow(it);
-  r.name.textContent=it.name;
-  if(it.dur){
-    const src=`${fmtTime(it.dur)} · ${CODEC_NAMES[it.codec]||it.codec||'?'}${it.abps?' · '+Math.round(it.abps/1000)+' kbps':''}${it.ch?' · '+it.ch+'ch':''} · ${fmtSize(it.size)}`;
-    const f=XFMT[xs.format];
-    const how=xs.format==='m4a'?(it.codec==='aac'?'העתקה ללא איבוד':'AAC 192 kbps'):xs.format==='mp3'?xs.kbps+' kbps':'16-bit';
-    const dst=`${f.label} · ${how} · ${it.out?fmtSize(it.out.blob.size):'~'+fmtSize(Math.round(xEstimate(it)))}`;
-    r.specs.innerHTML='';r.specs.append(src,document.createElement('br'));const sp=document.createElement('span');sp.className='arrow';sp.textContent='→ '+dst;r.specs.append(sp);
-  }else r.specs.textContent=fmtSize(it.size);
-  let st,cls='status';
-  switch(it.status){
-    case 'probing':st='בודק את הקובץ…';break;
-    case 'loading':st='טוען מנוע…';break;
-    case 'ready':st='מוכן';break;
-    case 'converting':st=`מחלץ ${Math.round(it.progress*100)}%`;break;
-    case 'done':st='השמע מוכן';cls+=' done';break;
-    case 'error':st=it.error||'שגיאה';cls+=' err';break;
-  }
-  r.status.textContent=st;r.status.className=cls;
-  r.bar.style.width=(it.status==='done'?100:it.status==='converting'?it.progress*100:0)+'%';
-  r.meter.hidden=it.status==='error';
-  r.conv.hidden=it.status!=='ready';r.conv.disabled=xBusy;
-  r.cancel.hidden=it.status!=='converting';
-  r.dl.hidden=it.status!=='done';r.sh.hidden=!(it.status==='done'&&canShareFiles());
-  r.rm.hidden=it.status==='converting';
-  if(it.status==='done'&&it.out){if(r.audio.dataset.src!==it.out.url){r.audio.src=it.out.url;r.audio.dataset.src=it.out.url;}r.audio.hidden=false;}
-  else{r.audio.hidden=true;if(r.audio.dataset.src){r.audio.removeAttribute('src');delete r.audio.dataset.src;r.audio.load();}}
-}
-function xSum(){
-  const n=xItems.length,done=xItems.filter(i=>i.status==='done').length;
-  $('#xSum').innerHTML=n?`<b>${n}</b> סרטונים · <b>${done}</b> חולצו`:'אין סרטונים';
-  $('#xEmpty').hidden=n>0;
-  $('#xConvertAll').disabled=xBusy||!xItems.some(i=>i.status==='ready');
-  $('#xZipAll').disabled=xBusy||!done;
-}
-function xDropOut(it){if(it.out){URL.revokeObjectURL(it.out.url);it.out=null;}}
-function xRemove(it){xDropOut(it);URL.revokeObjectURL(it.url);const r=xRows.get(it.id);if(r){r.li.remove();xRows.delete(it.id);}xItems=xItems.filter(x=>x!==it);xSum();}
-$('#xClear').addEventListener('click',()=>{if(xBusy){toast('עצור קודם את החילוץ');return;}[...xItems].forEach(xRemove);});
-
-async function xAdd(files){
-  for(const f of files){
-    const it={id:++uid,file:f,name:f.name,size:f.size,url:URL.createObjectURL(f),status:MB?'probing':'loading',progress:0,out:null};
-    xItems.push(it);xUpdateRow(it);xSum();
-    try{
-      await loadMB();it.status='probing';xUpdateRow(it);
-      const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(f)});
-      const at=await input.getPrimaryAudioTrack();
-      if(!at)throw new Error('noaudio');
-      it.dur=await input.computeDuration();
-      try{it.codec=await at.getCodec();}catch(e){}
-      try{it.ch=await at.getNumberOfChannels();it.sr=await at.getSampleRate();}catch(e){}
-      try{it.abps=(await at.computePacketStats(150)).averageBitrate;}catch(e){}
-      if(!(await at.canDecode())&&it.codec!=='aac')throw new Error('nodecode');
-      if(input.dispose)input.dispose();
-      it.status='ready';
-    }catch(e){
-      it.status='error';
-      it.error=e.message==='noaudio'?'אין שמע בסרטון הזה.':e.message==='nodecode'?'הדפדפן לא יודע לפתוח את סוג השמע בסרטון הזה.':!MB?'לא הצלחתי לטעון את המנוע. בדוק חיבור לאינטרנט ונסה שוב.':'לא הצלחתי לקרוא את הקובץ.';
-    }
-    xUpdateRow(it);xSum();
-  }
-}
-['#xPick','#xPickFiles','#xPickMulti'].forEach(q=>$(q).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)xAdd(fs);}));
-
-async function xRun(it,format,onP){
-  const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
-  const wav=format==='wav';
-  const output=new MB.Output({format:wav?new MB.WavOutputFormat():new MB.Mp4OutputFormat({fastStart:'in-memory'}),target:new MB.BufferTarget()});
-  const audio=wav?{codec:'pcm-s16'}:(it.codec==='aac'?{}:{codec:'aac',bitrate:192000});
-  const conv=await MB.Conversion.init({input,output,video:{discard:true},audio});
-  if(!conv.isValid)throw new Error('invalid');
-  it.conv=conv;
-  conv.onProgress=onP;
-  await conv.execute();
-  if(it.canceled)throw new Error('canceled');
-  return output.target.buffer;
-}
-async function xConvertOne(it,fromAll){
-  if(it.status!=='ready'||(xBusy&&!fromAll))return;
-  if(xs.format==='mp3'&&!hasLame()){toast('מקודד ה-MP3 לא נטען. רענן את הדף, או בחר M4A.');return;}
-  if(!fromAll){xBusy=true;xItems.forEach(xUpdateRow);}
-  it.status='converting';it.progress=0;it.canceled=false;xUpdateRow(it);xSum();
-  const r=xRows.get(it.id);
-  const show=p=>{it.progress=p;if(r){r.bar.style.width=(p*100)+'%';r.status.textContent=`מחלץ ${Math.round(p*100)}%`;}};
-  try{
-    const f=XFMT[xs.format];let blob;
-    if(xs.format==='mp3'){
-      const buf=await xRun(it,'wav',p=>show(p*0.4));
-      it.conv=null;
-      let ab=await new Promise((res,rej)=>{const pr=getCtx().decodeAudioData(buf,res,rej);if(pr&&pr.catch)pr.catch(rej);});
-      if(ab.numberOfChannels>2||ab.sampleRate>48000){
-        const sr=ab.sampleRate>48000?48000:ab.sampleRate,oc=new OfflineAudioContext(Math.min(2,ab.numberOfChannels),Math.ceil(ab.duration*sr),sr);
-        const s=oc.createBufferSource();s.buffer=ab;s.connect(oc.destination);s.start();ab=await oc.startRendering();
-      }
-      blob=await encodeMp3(ab,xs.kbps,p=>{if(it.canceled)throw new Error('canceled');show(0.4+p*0.6);});
-    }else{
-      blob=new Blob([await xRun(it,xs.format,show)],{type:f.type});
-    }
-    if(it.canceled)throw new Error('canceled');
-    it.out={blob,name:baseName(it.name)+'.'+f.ext,url:URL.createObjectURL(blob)};
-    it.status='done';
-  }catch(e){
-    if(it.canceled){it.status='ready';toast('החילוץ נעצר');}
-    else{it.status='error';it.error='החילוץ נכשל'+(e&&e.message&&e.message!=='invalid'?': '+e.message:'')+'. נסה פורמט אחר.';}
-  }
-  it.conv=null;
-  if(!fromAll){xBusy=false;xItems.forEach(xUpdateRow);}else xUpdateRow(it);
-  xSum();
-}
-$('#xConvertAll').addEventListener('click',async()=>{
-  if(xBusy)return;
-  if(xs.format==='mp3'&&!hasLame()){toast('מקודד ה-MP3 לא נטען. רענן את הדף, או בחר M4A.');return;}
-  xBusy=true;xItems.forEach(xUpdateRow);xSum();
-  for(const it of xItems.filter(i=>i.status==='ready'))await xConvertOne(it,true);
-  xBusy=false;xItems.forEach(xUpdateRow);xSum();
-  const n=xItems.filter(i=>i.status==='done').length;if(n)toast(`${n} קובצי שמע מוכנים`);
-});
-$('#xZipAll').addEventListener('click',async()=>{
-  const done=xItems.filter(i=>i.status==='done'&&i.out);if(!done.length)return;
-  const used=new Set(),files=[];
-  for(const it of done){let n=it.out.name,k=2;while(used.has(n))n=baseName(it.out.name)+` (${k++}).`+XFMT[xs.format].ext;used.add(n);files.push({name:n,data:new Uint8Array(await it.out.blob.arrayBuffer())});}
-  saveBlob(makeZip(files),`audio-from-video-${files.length}.zip`);
-});
-
 /* ---------- start ---------- */
-syncVControls();vSum();renderQuality();aSum();xSync();xSum();
+syncVControls();vSum();aSyncControls();renderQuality();aSum();
 let startTab='video';try{startTab=localStorage.getItem('tab')||'video';}catch(e){}
 if(['#audio','#video','#extract'].includes(location.hash))startTab=location.hash.slice(1);
 showTab(startTab);
