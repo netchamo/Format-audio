@@ -40,7 +40,8 @@
   --level:#EDB03A; --level-soft:#3A2E12; --good:#4FBF7E; --good-soft:#163323; --bad:#F2796B; --bad-soft:#3B1915;
   --wave:#4D5C59; color-scheme:dark}
 
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.tabs button,.preset,.seg label,.pick-alt,.drop{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 [hidden]{display:none!important}
 /* screen change: each screen has its own masthead tint and slides in */
 body[data-screen="audio"]{--band:#2E6B3F;--band-2:#1F5231}
@@ -111,6 +112,9 @@ main{display:flex;flex-direction:column;gap:16px;padding-top:18px}
 .preset .spec{color:var(--accent);font-family:var(--mono);font-size:12px}
 .preset .d{color:var(--muted);font-size:13px;line-height:1.35}
 .preset:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ytres{display:inline-flex;gap:4px;margin-top:6px;padding:3px;border-radius:999px;background:var(--surface);border:1px solid var(--line);align-self:flex-start}
+.ytres button{border:0;padding:3px 10px;border-radius:999px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:600}
+.ytres button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .sizebox{display:flex;align-items:center;gap:6px;margin-top:6px}
 .sizebox input{width:72px;font:inherit;font-family:var(--mono);font-size:14px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 
@@ -245,8 +249,10 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
         <div role="button" tabindex="0" class="preset" data-p="wa" aria-pressed="true"><b>וואטסאפ בלי טשטוש</b><span class="spec" dir="ltr">540p · 1500 kbps</span><span class="d">כמו האפליקציה שעבדה לך. נקודת התחלה מומלצת</span></div>
         <div role="button" tabindex="0" class="preset" data-p="hd" aria-pressed="false"><b>וואטסאפ HD</b><span class="spec" dir="ltr">720p · 2000 kbps</span><span class="d">חד יותר, וואטסאפ עלול לכווץ שוב</span></div>
         <div role="button" tabindex="0" class="preset" data-p="iph" aria-pressed="false"><b>אייפון 1080p</b><span class="spec" dir="ltr">1080p · 30fps · 4500 kbps</span><span class="d">לפי המדריך. לבדוק מול 540p</span></div>
+        <div role="button" tabindex="0" class="preset" data-p="yt" aria-pressed="false"><b>יוטיוב</b><span class="spec" dir="ltr" id="ytSpec">1080p · 8–12 Mbps · AAC 320k</span><span class="d">איכות גבוהה להעלאה. קובץ גדול</span>
+          <span class="ytres" role="group" aria-label="רזולוציה ליוטיוב"><button type="button" data-r="1080">1080p</button><button type="button" data-r="2160">4K</button></span></div>
         <div role="button" tabindex="0" class="preset" data-p="lite" aria-pressed="false"><b>קל במיוחד</b><span class="spec" dir="ltr">480p · 900 kbps</span><span class="d">לסרטונים ארוכים</span></div>
-        <div role="button" tabindex="0" class="preset wide" data-p="size" aria-pressed="false"><b>לפי גודל קובץ</b><span class="spec" dir="ltr">auto kbps</span><span class="d">הקצב מחושב לפי האורך</span>
+        <div role="button" tabindex="0" class="preset" data-p="size" aria-pressed="false"><b>לפי גודל קובץ</b><span class="spec" dir="ltr">auto kbps</span><span class="d">הקצב מחושב לפי האורך</span>
           <span class="sizebox"><span>עד</span><input type="number" id="vTargetMB" min="2" max="500" step="1" value="16" inputmode="numeric" aria-label="גודל יעד במגה-בייט"><span>MB</span></span></div>
       </div>
 
@@ -261,6 +267,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
               <label><input type="radio" name="vres" id="vres-540" value="540"><span>540p</span></label>
               <label><input type="radio" name="vres" id="vres-720" value="720" checked><span>720p</span></label>
               <label><input type="radio" name="vres" id="vres-1080" value="1080"><span>1080p</span></label>
+              <label><input type="radio" name="vres" id="vres-2160" value="2160"><span>4K</span></label>
               <label><input type="radio" name="vres" id="vres-orig" value="orig"><span class="he">מקור</span></label>
             </div>
           </fieldset>
@@ -294,6 +301,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
             <div class="seg">
               <label><input type="radio" name="vaud" id="vaud-keep" value="keep" checked><span class="he">מקור</span></label>
               <label><input type="radio" name="vaud" id="vaud-128" value="128"><span>128k</span></label>
+              <label><input type="radio" name="vaud" id="vaud-320" value="320"><span>320k</span></label>
               <label><input type="radio" name="vaud" id="vaud-160" value="160"><span>160k</span></label>
               <label><input type="radio" name="vaud" id="vaud-96" value="96"><span>96k</span></label>
               <label><input type="radio" name="vaud" id="vaud-none" value="none"><span class="he">בלי</span></label>
@@ -301,7 +309,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
           </fieldset>
         </div>
       </details>
-      <p class="tip"><b>איך מכיילים:</b> ליד כל סרטון מופיע הביט רייט של המקור ושל התוצאה. אם וואטסאפ עדיין מטשטש, הורד את הביט רייט ב-200–300, או ירד ברזולוציה, ונסה שוב. כשתמצא מספר שעובד, הוא יישמר לפעם הבאה. לאפס דחיסה: שלח בוואטסאפ דרך + ← מסמך (הנמען מקבל קובץ להורדה).</p>
+      <p class="tip"><b>איך מכיילים:</b> ליד כל סרטון מופיע הביט רייט של המקור ושל התוצאה. אם וואטסאפ עדיין מטשטש, הורד את הביט רייט ב-200–300, או ירד ברזולוציה, ונסה שוב. כשתמצא מספר שעובד, הוא יישמר לפעם הבאה. לאפס דחיסה: שלח בוואטסאפ דרך + ← מסמך (הנמען מקבל קובץ להורדה). בסרטון ארוך, השאר את האפליקציה פתוחה עד הסוף.</p>
     </section>
 
     <section class="card">
@@ -463,7 +471,7 @@ function loadMB(){if(MB)return Promise.resolve(MB);if(!mbLoading)mbLoading=impor
 const canVideo=typeof window.VideoEncoder!=='undefined'&&typeof window.VideoDecoder!=='undefined';
 if(!canVideo)$('#vUnsupported').hidden=false;
 
-const PRESETS={wa:{res:540,kbps:1500,fps:'orig'},hd:{res:720,kbps:2000,fps:30},iph:{res:1080,kbps:4500,fps:30},lite:{res:480,kbps:900,fps:30},size:{res:720,kbps:null,fps:30}};
+const PRESETS={wa:{res:540,kbps:1500,fps:'orig'},hd:{res:720,kbps:2000,fps:30},iph:{res:1080,kbps:4500,fps:30},yt:{res:1080,kbps:null,fps:'orig',audio:'320'},lite:{res:480,kbps:900,fps:30},size:{res:720,kbps:null,fps:30}};
 const vs={preset:'wa',res:540,kbps:1500,fps:'orig',audio:'keep',targetMB:16,cbr:false,sdr:true};
 try{const saved=JSON.parse(localStorage.getItem('vset')||'null');if(saved&&typeof saved==='object')Object.assign(vs,saved);}catch(e){}
 function saveV(){try{localStorage.setItem('vset',JSON.stringify(vs));}catch(e){}}
@@ -473,7 +481,9 @@ function setRadio(name,val){const el=document.querySelector(`input[name=${name}]
 function syncVControls(){
   document.querySelectorAll('.preset').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===vs.preset));
   setRadio('vres',vs.res);setRadio('vfps',vs.fps);setRadio('vaud',vs.audio);
-  const auto=vs.preset==='size';
+  const auto=vs.preset==='size'||vs.preset==='yt';
+  document.querySelectorAll('.ytres button').forEach(b=>b.setAttribute('aria-pressed',vs.preset==='yt'&&+b.dataset.r===(vs.res===2160?2160:1080)));
+  $('#ytSpec').textContent=vs.preset==='yt'&&vs.res===2160?'4K · 40–60 Mbps · AAC 320k':'1080p · 8–12 Mbps · AAC 320k';
   if(document.activeElement!==$('#vKbps'))$('#vKbps').value=auto?'':vs.kbps;
   $('#vKbps').placeholder=auto?'auto':'';
   $('#vKbpsRange').value=vs.kbps;
@@ -485,18 +495,25 @@ function syncVControls(){
 }
 function vChanged(){saveV();vItems.forEach(it=>{if(it.status==='done'){vDropOut(it);it.status='ready';}});vItems.forEach(vUpdateRow);vSum();}
 function pickPreset(b){
-  const p=PRESETS[b.dataset.p];vs.preset=b.dataset.p;vs.res=p.res;vs.fps=p.fps;if(p.kbps)vs.kbps=p.kbps;
+  const p=PRESETS[b.dataset.p];const was=vs.preset;vs.preset=b.dataset.p;vs.res=p.res;vs.fps=p.fps;if(p.kbps)vs.kbps=p.kbps;
+  if(p.audio)vs.audio=p.audio;else if(was==='yt'&&vs.audio==='320')vs.audio='keep';
   syncVControls();vChanged();
 }
 document.querySelectorAll('.preset').forEach(b=>{
-  b.addEventListener('click',e=>{if(e.target.closest('input'))return;pickPreset(b);});
+  b.addEventListener('click',e=>{if(e.target.closest('input,button'))return;pickPreset(b);});
   b.addEventListener('keydown',e=>{if(e.target!==b)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();pickPreset(b);}});
 });
 $('#vTargetMB').addEventListener('click',e=>{e.stopPropagation();if(vs.preset!=='size'){vs.preset='size';syncVControls();vChanged();}});
 $('#vTargetMB').addEventListener('input',e=>{const v=+e.target.value;if(v>=1){vs.targetMB=v;if(vs.preset!=='size'){vs.preset='size';syncVControls();}vChanged();}});
-function custom(){if(vs.preset!=='size')vs.preset='custom';syncVControls();vChanged();}
-document.querySelectorAll('input[name=vres]').forEach(el=>el.addEventListener('change',()=>{vs.res=el.value==='orig'?'orig':+el.value;custom();}));
-document.querySelectorAll('input[name=vfps]').forEach(el=>el.addEventListener('change',()=>{vs.fps=el.value==='orig'?'orig':+el.value;custom();}));
+function custom(){if(vs.preset!=='size'){if(vs.preset==='yt')vs.kbps=ytKbps(1080,30);vs.preset='custom';}syncVControls();vChanged();}
+function shapeChanged(){if(vs.preset==='yt'){syncVControls();vChanged();}else custom();}
+document.querySelectorAll('input[name=vres]').forEach(el=>el.addEventListener('change',()=>{vs.res=el.value==='orig'?'orig':+el.value;shapeChanged();}));
+document.querySelectorAll('input[name=vfps]').forEach(el=>el.addEventListener('change',()=>{vs.fps=el.value==='orig'?'orig':+el.value;shapeChanged();}));
+document.querySelectorAll('.ytres button').forEach(b=>b.addEventListener('click',e=>{
+  e.stopPropagation();
+  const was=vs.preset;vs.preset='yt';vs.res=+b.dataset.r;vs.fps='orig';vs.audio='320';
+  syncVControls();vChanged();
+}));
 document.querySelectorAll('input[name=vaud]').forEach(el=>el.addEventListener('change',()=>{vs.audio=el.value;if(vs.preset==='size')syncVControls();vChanged();}));
 function setKbps(v){v=Math.round(+v);if(!(v>=200&&v<=20000))return;vs.kbps=v;custom();}
 $('#vKbps').addEventListener('change',e=>setKbps(e.target.value));
@@ -507,6 +524,8 @@ $('#vCbr').addEventListener('change',e=>{vs.cbr=e.target.checked;vChanged();});
 $('#vSdr').addEventListener('change',e=>{vs.sdr=e.target.checked;vChanged();});
 
 const even=n=>Math.max(2,Math.round(n/2)*2);
+// YouTube's published SDR upload targets, by output size and frame rate
+function ytKbps(short,fps){const hi=fps>31;if(short<=720)return hi?7500:5000;if(short<=1080)return hi?12000:8000;if(short<=1440)return hi?24000:16000;return hi?60000:40000;}
 function vPlan(it){
   const short=Math.min(it.w,it.h);
   const tShort=vs.res==='orig'?short:Math.min(short,vs.res);
@@ -514,7 +533,8 @@ function vPlan(it){
   const fps=(vs.fps==='orig'||!it.fps||it.fps<=vs.fps+0.5)?null:vs.fps;
   const abps=(!it.hasAudio||vs.audio==='none')?0:vs.audio==='keep'?(it.abps||128000):vs.audio*1000;
   let vbps;
-  if(vs.preset==='size'){vbps=Math.floor(vs.targetMB*1e6*8*0.94/Math.max(1,it.dur)-abps);vbps=Math.min(20e6,Math.max(150e3,vbps));}
+  if(vs.preset==='yt'){vbps=Math.round(ytKbps(Math.min(ow,oh),fps||it.fps||30)*1000);}
+  else if(vs.preset==='size'){vbps=Math.floor(vs.targetMB*1e6*8*0.94/Math.max(1,it.dur)-abps);vbps=Math.min(20e6,Math.max(150e3,vbps));}
   else vbps=Math.max(150e3,Math.round(vs.kbps*1000-abps));
   const est=Math.round((vbps+abps)*it.dur/8)+30000;
   return {ow,oh,resize:sc<0.999,fps,vbps,abps,est};
@@ -587,7 +607,7 @@ function vSum(){
   $('#vEmpty').hidden=n>0;
   $('#vConvertAll').disabled=vBusy||!canVideo||!vItems.some(i=>i.status==='ready');
 }
-function vDropOut(it){if(it.out){URL.revokeObjectURL(it.out.url);it.out=null;}it.audioLost=false;}
+function vDropOut(it){if(it.out){URL.revokeObjectURL(it.out.url);if(it.out.cleanup)it.out.cleanup();it.out=null;}it.audioLost=false;}
 function vRemove(it){vDropOut(it);URL.revokeObjectURL(it.url);const r=vRows.get(it.id);if(r){r.li.remove();vRows.delete(it.id);}vItems=vItems.filter(x=>x!==it);vSum();}
 $('#vClear').addEventListener('click',()=>{if(vBusy){toast('עצור קודם את הכיווץ');return;}[...vItems].forEach(vRemove);});
 
@@ -618,9 +638,52 @@ async function vAdd(files){
 }
 ['#vPick','#vPickFiles','#vPickMulti'].forEach(q=>$(q).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)vAdd(fs);}));
 
+/* Output goes to the browser's private disk area when available, so long or high-bitrate videos don't fill the phone's memory. */
+let opfsRoot=null,opfsOK=null;
+async function getOpfs(){
+  if(opfsOK!==null)return opfsOK?opfsRoot:null;
+  try{
+    opfsRoot=await navigator.storage.getDirectory();
+    const h=await opfsRoot.getFileHandle('mc-probe',{create:true});
+    if(!h.createWritable)throw 0;
+    const w=await h.createWritable();await w.close();await opfsRoot.removeEntry('mc-probe');
+    opfsOK=true;
+  }catch(e){opfsOK=false;opfsRoot=null;}
+  return opfsOK?opfsRoot:null;
+}
+async function cleanOpfs(){
+  const root=await getOpfs();if(!root||!root.entries)return;
+  try{for await(const [name] of root.entries()){if(name.startsWith('mc-'))await root.removeEntry(name).catch(()=>{});}}catch(e){}
+}
+let outSeq=0;
+async function makeTarget(){
+  const root=await getOpfs();
+  if(root){
+    const name='mc-'+Date.now()+'-'+(++outSeq)+'.mp4';
+    try{
+      const h=await root.getFileHandle(name,{create:true});
+      const w=await h.createWritable();
+      return {target:new MB.StreamTarget(w,{chunked:true}),fastStart:false,
+        finish:async()=>new Blob([await h.getFile()],{type:'video/mp4'}),
+        cleanup:()=>root.removeEntry(name).catch(()=>{})};
+    }catch(e){}
+  }
+  const t=new MB.BufferTarget();
+  return {target:t,fastStart:'in-memory',finish:async()=>new Blob([t.buffer],{type:'video/mp4'}),cleanup:()=>{}};
+}
+let wakeLock=null,wakeUsers=0;
+async function holdAwake(on){
+  wakeUsers=Math.max(0,wakeUsers+(on?1:-1));
+  try{
+    if(wakeUsers>0&&!wakeLock&&navigator.wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}
+    if(wakeUsers===0&&wakeLock){await wakeLock.release();wakeLock=null;}
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&wakeUsers>0&&!wakeLock)holdAwake(true).then(()=>wakeUsers--);});
 async function vRunOnce(it,p,opt){
   const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
-  const output=new MB.Output({format:new MB.Mp4OutputFormat({fastStart:'in-memory'}),target:new MB.BufferTarget()});
+  const tgt=await makeTarget();it.tgt=tgt;
+  const output=new MB.Output({format:new MB.Mp4OutputFormat({fastStart:tgt.fastStart}),target:tgt.target});
   const video={codec:'avc',forceTranscode:true};
   if(MB.Quality)video.quality=new MB.Quality({bitrate:p.vbps,bitrateMode:opt.cbr?'constant':'variable'});else video.bitrate=p.vbps;
   if(p.resize){if(it.w<=it.h)video.width=p.ow;else video.height=p.oh;}
@@ -647,26 +710,30 @@ async function vRunOnce(it,p,opt){
   conv.onProgress=pr=>{it.progress=pr;if(r){r.bar.style.width=(pr*100)+'%';r.status.textContent=`מכווץ ${Math.round(pr*100)}%`;}};
   await conv.execute();
   if(it.canceled)throw new Error('canceled');
-  return new Blob([output.target.buffer],{type:'video/mp4'});
+  return await tgt.finish();
 }
 async function vConvertOne(it,fromAll){
   if(it.status!=='ready'||(vBusy&&!fromAll)||!canVideo)return;
   if(!fromAll){vBusy=true;vItems.forEach(vUpdateRow);}
   it.status='converting';it.progress=0;it.canceled=false;it.fallback='';vUpdateRow(it);vSum();
+  holdAwake(true);
   const p=vPlan(it);
   // what to try, in order: the chosen settings, then safer fallbacks some phone encoders need
   const tries=[{cbr:vs.cbr,fps:p.fps,note:''}];
   if(vs.cbr)tries.push({cbr:false,fps:p.fps,note:'המכשיר לא תומך בקצב קבוע, נעשה שימוש בקצב משתנה'});
   if(!p.fps&&it.fps>61)tries.push({cbr:false,fps:60,note:'המכשיר לא הצליח לקודד '+Math.round(it.fps)+'fps, ירדתי ל-60'});
+  if(Math.min(p.ow,p.oh)>1080&&(p.fps||it.fps||30)>31)tries.push({cbr:false,fps:30,note:'המכשיר לא הצליח לקודד 4K ב-60 פריימים, ירדתי ל-30'});
   if(it.hdr&&vs.sdr!==false)tries.push({cbr:false,fps:p.fps||(it.fps>61?60:null),sdr:false,note:'המרת HDR ל-SDR לא הצליחה במכשיר הזה, הסרטון כווץ בלי המרה'});
   let lastErr=null;
   for(const t of tries){
     try{
+      it.tgt=null;
       const blob=await vRunOnce(it,p,t);
-      it.out={blob,name:baseName(it.name)+'-wa.mp4',url:URL.createObjectURL(blob)};
+      it.out={blob,name:baseName(it.name)+(vs.preset==='yt'?'-yt.mp4':'-wa.mp4'),url:URL.createObjectURL(blob),cleanup:it.tgt?it.tgt.cleanup:null};it.tgt=null;
       it.fallback=t.note;it.status='done';lastErr=null;break;
     }catch(e){
       lastErr=e;
+      if(it.tgt){it.tgt.cleanup();it.tgt=null;}
       if(it.canceled)break;
       const m=e&&e.message;if(m==='nodec')break;
       it.progress=0;
@@ -679,6 +746,7 @@ async function vConvertOne(it,fromAll){
     else if(msg==='nodec'){it.status='error';it.error='הדפדפן לא יודע לפתוח את סוג הווידאו הזה.';}
     else{it.status='error';it.error='הכיווץ נכשל'+(msg?': '+msg:'')+'. נסה רזולוציה או פריימים נמוכים יותר.';}
   }
+  holdAwake(false);
   if(it.fallback)toast(it.fallback);
   it.conv=null;
   if(!fromAll){vBusy=false;vItems.forEach(vUpdateRow);}else vUpdateRow(it);
@@ -934,6 +1002,7 @@ $('#aZipAll').addEventListener('click',async()=>{
 });
 
 /* ---------- start ---------- */
+cleanOpfs();
 syncVControls();vSum();aSyncControls();renderQuality();aSum();
 let startTab='video';try{startTab=localStorage.getItem('tab')||'video';}catch(e){}
 if(['#audio','#video','#extract'].includes(location.hash))startTab=location.hash.slice(1);
