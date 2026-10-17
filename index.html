@@ -139,6 +139,7 @@ legend{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);pa
 .range input{flex:1;accent-color:var(--accent);min-width:0}
 .range output{min-width:84px;text-align:left}
 .span2{grid-column:1/-1}
+.fmt-note{margin:2px 0 0;font-size:13px;color:var(--muted)}
 .rate-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .rate-row input[type=number]{width:96px;font:inherit;font-family:var(--mono);font-size:18px;font-weight:500;padding:6px 10px;border:1.5px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--ink);text-align:center}
 .rate-row .seg{margin-inline-start:4px}
@@ -246,8 +247,8 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
     <section class="card" aria-label="הגדרות וידאו">
       <div class="card-h"><span class="chip-title t-green"><i>1</i>בחר איכות</span></div>
       <div class="presets" id="presets">
-        <div role="button" tabindex="0" class="preset" data-p="wa" aria-pressed="true"><b>וואטסאפ בלי טשטוש</b><span class="spec" dir="ltr">540p · 1500 kbps</span><span class="d">כמו האפליקציה שעבדה לך. נקודת התחלה מומלצת</span></div>
-        <div role="button" tabindex="0" class="preset" data-p="hd" aria-pressed="false"><b>וואטסאפ HD</b><span class="spec" dir="ltr">720p · 2000 kbps</span><span class="d">חד יותר, וואטסאפ עלול לכווץ שוב</span></div>
+        <div role="button" tabindex="0" class="preset" data-p="wa" aria-pressed="false"><b>וואטסאפ 540p</b><span class="spec" dir="ltr">540p · 1500 kbps</span><span class="d">קטן. וואטסאפ לא מציע בו HD</span></div>
+        <div role="button" tabindex="0" class="preset" data-p="hd" aria-pressed="true"><b>וואטסאפ HD</b><span class="spec" dir="ltr">720p · 2000 kbps</span><span class="d">מומלץ. שלח עם HD מסומן</span></div>
         <div role="button" tabindex="0" class="preset" data-p="iph" aria-pressed="false"><b>אייפון 1080p</b><span class="spec" dir="ltr">1080p · 30fps · 4500 kbps</span><span class="d">לפי המדריך. לבדוק מול 540p</span></div>
         <div role="button" tabindex="0" class="preset" data-p="yt" aria-pressed="false"><b>יוטיוב</b><span class="spec" dir="ltr" id="ytSpec">1080p · 8–12 Mbps · AAC 320k</span><span class="d">איכות גבוהה להעלאה. קובץ גדול</span>
           <span class="ytres" role="group" aria-label="רזולוציה ליוטיוב"><button type="button" data-r="1080">1080p</button><button type="button" data-r="2160">4K</button></span></div>
@@ -295,6 +296,16 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
               <label><input type="radio" name="vfps" id="vfps-60" value="60"><span>60</span></label>
               <label><input type="radio" name="vfps" id="vfps-orig" value="orig"><span class="he">מקור</span></label>
             </div>
+          </fieldset>
+          <fieldset class="span2">
+            <legend>פורמט קובץ</legend>
+            <div class="seg">
+              <label><input type="radio" name="vcont" id="vcont-mp4" value="mp4" checked><span>MP4</span></label>
+              <label><input type="radio" name="vcont" id="vcont-mov" value="mov"><span>MOV</span></label>
+              <label><input type="radio" name="vcont" id="vcont-mkv" value="mkv"><span>MKV</span></label>
+              <label><input type="radio" name="vcont" id="vcont-webm" value="webm"><span>WebM</span></label>
+            </div>
+            <p class="fmt-note" id="vContNote"></p>
           </fieldset>
           <fieldset>
             <legend>שמע</legend>
@@ -472,7 +483,7 @@ const canVideo=typeof window.VideoEncoder!=='undefined'&&typeof window.VideoDeco
 if(!canVideo)$('#vUnsupported').hidden=false;
 
 const PRESETS={wa:{res:540,kbps:1500,fps:'orig'},hd:{res:720,kbps:2000,fps:30},iph:{res:1080,kbps:4500,fps:30},yt:{res:1080,kbps:null,fps:'orig',audio:'320'},lite:{res:480,kbps:900,fps:30},size:{res:720,kbps:null,fps:30}};
-const vs={preset:'wa',res:540,kbps:1500,fps:'orig',audio:'keep',targetMB:16,cbr:false,sdr:true};
+const vs={preset:'hd',res:720,kbps:2000,fps:30,audio:'keep',targetMB:16,cbr:false,sdr:true,container:'mp4'};
 try{const saved=JSON.parse(localStorage.getItem('vset')||'null');if(saved&&typeof saved==='object')Object.assign(vs,saved);}catch(e){}
 function saveV(){try{localStorage.setItem('vset',JSON.stringify(vs));}catch(e){}}
 let vItems=[],vBusy=false;const vRows=new Map();
@@ -490,6 +501,8 @@ function syncVControls(){
   document.querySelectorAll('input[name=vkq]').forEach(el=>el.checked=!auto&&+el.value===vs.kbps);
   ['#vKbps','#vKbpsRange'].forEach(q=>$(q).disabled=auto);
   document.querySelectorAll('input[name=vkq]').forEach(el=>el.disabled=auto);
+  setRadio('vcont',vs.container||'mp4');
+  $('#vContNote').textContent=CONT[vs.container||'mp4'].note;
   $('#vCbr').checked=!!vs.cbr;$('#vSdr').checked=vs.sdr!==false;
   $('#vTargetMB').value=vs.targetMB;
 }
@@ -521,8 +534,15 @@ $('#vKbps').addEventListener('input',e=>{const v=+e.target.value;if(v>=200&&v<=2
 $('#vKbpsRange').addEventListener('input',e=>setKbps(e.target.value));
 document.querySelectorAll('input[name=vkq]').forEach(el=>el.addEventListener('change',()=>setKbps(el.value)));
 $('#vCbr').addEventListener('change',e=>{vs.cbr=e.target.checked;vChanged();});
+document.querySelectorAll('input[name=vcont]').forEach(el=>el.addEventListener('change',()=>{vs.container=el.value;syncVControls();vChanged();}));
 $('#vSdr').addEventListener('change',e=>{vs.sdr=e.target.checked;vChanged();});
 
+const CONT={
+  mp4: {ext:'mp4', mime:'video/mp4',        note:'מומלץ לוואטסאפ, ליוטיוב ולכל טלפון. וידאו H.264 ושמע AAC.'},
+  mov: {ext:'mov', mime:'video/quicktime',  note:'הפורמט של אפל. אותו תוכן כמו MP4, נוח לאייפון ולמק. וואטסאפ מקבל אותו.'},
+  mkv: {ext:'mkv', mime:'video/x-matroska', note:'נוח למחשב ולנגנים כמו VLC. וואטסאפ ואייפון לא מנגנים אותו ישירות.'},
+  webm:{ext:'webm',mime:'video/webm',       note:'פורמט של אתרים, עם וידאו VP9 ושמע Opus. וואטסאפ ימיר אותו מחדש, לא מומלץ לשם.'}
+};
 const even=n=>Math.max(2,Math.round(n/2)*2);
 // YouTube's published SDR upload targets, by output size and frame rate
 function ytKbps(short,fps){const hi=fps>31;if(short<=720)return hi?7500:5000;if(short<=1080)return hi?12000:8000;if(short<=1440)return hi?24000:16000;return hi?60000:40000;}
@@ -656,20 +676,20 @@ async function cleanOpfs(){
   try{for await(const [name] of root.entries()){if(name.startsWith('mc-'))await root.removeEntry(name).catch(()=>{});}}catch(e){}
 }
 let outSeq=0;
-async function makeTarget(){
+async function makeTarget(ext,mime){
   const root=await getOpfs();
   if(root){
-    const name='mc-'+Date.now()+'-'+(++outSeq)+'.mp4';
+    const name='mc-'+Date.now()+'-'+(++outSeq)+'.'+ext;
     try{
       const h=await root.getFileHandle(name,{create:true});
       const w=await h.createWritable();
       return {target:new MB.StreamTarget(w,{chunked:true}),fastStart:false,
-        finish:async()=>new Blob([await h.getFile()],{type:'video/mp4'}),
+        finish:async()=>new Blob([await h.getFile()],{type:mime}),
         cleanup:()=>root.removeEntry(name).catch(()=>{})};
     }catch(e){}
   }
   const t=new MB.BufferTarget();
-  return {target:t,fastStart:'in-memory',finish:async()=>new Blob([t.buffer],{type:'video/mp4'}),cleanup:()=>{}};
+  return {target:t,fastStart:'in-memory',finish:async()=>new Blob([t.buffer],{type:mime}),cleanup:()=>{}};
 }
 let wakeLock=null,wakeUsers=0;
 async function holdAwake(on){
@@ -682,9 +702,13 @@ async function holdAwake(on){
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&wakeUsers>0&&!wakeLock)holdAwake(true).then(()=>wakeUsers--);});
 async function vRunOnce(it,p,opt){
   const input=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
-  const tgt=await makeTarget();it.tgt=tgt;
-  const output=new MB.Output({format:new MB.Mp4OutputFormat({fastStart:tgt.fastStart}),target:tgt.target});
-  const video={codec:'avc',forceTranscode:true};
+  const cont=CONT[vs.container]?vs.container:'mp4',C=CONT[cont];
+  const tgt=await makeTarget(C.ext,C.mime);it.tgt=tgt;
+  const fmt=cont==='mov'?new MB.MovOutputFormat({fastStart:tgt.fastStart}):cont==='mkv'?new MB.MkvOutputFormat():cont==='webm'?new MB.WebMOutputFormat():new MB.Mp4OutputFormat({fastStart:tgt.fastStart});
+  const output=new MB.Output({format:fmt,target:tgt.target});
+  let vcodec='avc';
+  if(cont==='webm'){vcodec='vp9';try{if(!(await MB.canEncodeVideo('vp9',{width:p.ow,height:p.oh})))vcodec='vp8';}catch(e){vcodec='vp8';}}
+  const video={codec:vcodec,forceTranscode:true};
   if(MB.Quality)video.quality=new MB.Quality({bitrate:p.vbps,bitrateMode:opt.cbr?'constant':'variable'});else video.bitrate=p.vbps;
   if(p.resize){if(it.w<=it.h)video.width=p.ow;else video.height=p.oh;}
   if(opt.fps)video.frameRate=opt.fps;
@@ -698,7 +722,10 @@ async function vRunOnce(it,p,opt){
       return ctx.canvas;
     };
   }
-  const audio=vs.audio==='none'?{discard:true}:vs.audio==='keep'?{}:{codec:'aac',bitrate:(+vs.audio)*1000};
+  const acodec=cont==='webm'?'opus':'aac';
+  const audio=vs.audio==='none'?{discard:true}
+    :vs.audio==='keep'?(cont==='webm'?{codec:'opus',bitrate:Math.min(256000,Math.max(96000,Math.round(it.abps||128000)))}:{})
+    :{codec:acodec,bitrate:(+vs.audio)*1000};
   const conv=await MB.Conversion.init({input,output,video,audio});
   if(!conv.isValid){
     const vd=conv.discardedTracks.find(d=>d.track.isVideoTrack());
@@ -729,7 +756,7 @@ async function vConvertOne(it,fromAll){
     try{
       it.tgt=null;
       const blob=await vRunOnce(it,p,t);
-      it.out={blob,name:baseName(it.name)+(vs.preset==='yt'?'-yt.mp4':'-wa.mp4'),url:URL.createObjectURL(blob),cleanup:it.tgt?it.tgt.cleanup:null};it.tgt=null;
+      it.out={blob,name:baseName(it.name)+(vs.preset==='yt'?'-yt.':'-wa.')+(CONT[vs.container]||CONT.mp4).ext,url:URL.createObjectURL(blob),cleanup:it.tgt?it.tgt.cleanup:null};it.tgt=null;
       it.fallback=t.note;it.status='done';lastErr=null;break;
     }catch(e){
       lastErr=e;
