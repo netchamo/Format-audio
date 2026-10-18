@@ -192,7 +192,11 @@ ul.tracks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .sw-bw{background:linear-gradient(90deg,#111,#888 50%,#eee)}
 .preview{display:flex;flex-direction:column;gap:8px}
 .pv-stage{position:relative;border-radius:12px;overflow:hidden;background:#0d1312;aspect-ratio:16/9;max-width:100%;display:grid;place-items:center}
-.pv-stage canvas{width:100%;height:100%;object-fit:contain;display:block}
+.pv-stage canvas,.pv-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.pv-stage video{background:#0d1312}
+.pv-mode{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.pv-mode button{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600}
+.pv-mode button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .pv-stage input[type=range]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0;direction:ltr}
 .pv-line{position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35);pointer-events:none}
 .pv-line span{position:absolute;top:8px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:999px;white-space:nowrap}
@@ -364,10 +368,16 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
 
       <div class="preview" id="gPreview">
         <div class="pv-stage" id="pvStage">
+          <video id="pvVideo" muted playsinline preload="auto" aria-hidden="true"></video>
           <canvas id="pvCanvas" width="640" height="360" aria-label="תצוגה לפני ואחרי"></canvas>
-          <div class="pv-line" id="pvLine" aria-hidden="true"><span>לפני</span><span>אחרי</span></div>
+          <div class="pv-line" id="pvLine" aria-hidden="true"><span id="pvBeforeLbl">לפני</span><span>אחרי</span></div>
           <input type="range" id="pvSplit" min="0" max="100" value="50" aria-label="קו ההשוואה בין לפני לאחרי">
           <p class="pv-empty" id="pvEmpty">בחר סרטון למעלה כדי לראות כאן לפני ואחרי</p>
+        </div>
+        <div class="pv-mode" id="pvModeRow" hidden role="group" aria-label="מול מה להשוות">
+          <span>השוואה מול:</span>
+          <button type="button" data-m="hdr">המקור ב־HDR</button>
+          <button type="button" data-m="sdr">אחרי המרה ל־SDR</button>
         </div>
         <div class="pv-time" id="pvTimeRow" hidden>
           <span class="mono" id="pvTimeOut" dir="ltr">0:00</span>
@@ -376,6 +386,7 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
         </div>
       </div>
 
+      <label class="check"><input type="checkbox" id="gAutoWB" checked><span>איזון לבן אוטומטי: מחזיר לבן ללבן וגווני עור לטבעיים, כשהם נהיים כתומים או חומים אחרי ההמרה</span></label>
       <details class="adv" id="gAdv">
         <summary>כוונון צבע ידני</summary>
         <div class="sliders" id="gSliders"></div>
@@ -654,7 +665,7 @@ function vUpdateRow(it){
     const srcRate=it.size*8/Math.max(0.1,it.dur);
     const outFps=p.fps||it.fps;
     const src=`${fmtTime(it.dur)} · ${it.w}×${it.h}${it.fps?' · '+Math.round(it.fps)+'fps':''}${it.hdr?' · HDR':''} · ${kb(srcRate)} · ${fmtSize(it.size)}`;
-    const sdrTag=(it.hdr&&vs.sdr!==false?' · SDR':'')+(gradeActive()?' · '+LOOK_NAMES[vs.grade.look]:'');
+    const sdrTag=(it.hdr&&vs.sdr!==false?' · SDR':'')+(lookActive()?' · '+LOOK_NAMES[vs.grade.look]:'')+(wbOn(it)?' · איזון לבן':'');
     const dst=it.out
       ?`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''}${sdrTag} · ${kb(it.out.blob.size*8/Math.max(0.1,it.dur))} בפועל · ${fmtSize(it.out.blob.size)}`
       :`${p.ow}×${p.oh}${outFps?' · '+Math.round(outFps)+'fps':''}${sdrTag} · ${kb(p.vbps+p.abps)} · ~${fmtSize(p.est)}`;
@@ -775,15 +786,17 @@ async function vRunOnce(it,p,opt){
   if(opt.fps)video.frameRate=opt.fps;
   const toneMap=it.hdr&&vs.sdr!==false&&opt.sdr!==false;
   let grader=null;
-  if(opt.grade!==false&&gradeActive()){try{grader=new Grader();}catch(e){grader=null;}}
+  if(opt.grade!==false&&vs.grade.autoWB)await ensureWB(it);
+  const gWB=opt.grade!==false&&wbOn(it)?it.wb.slice():null;
+  if(opt.grade!==false&&(lookActive()||gWB)){try{grader=new Grader();}catch(e){grader=null;}}
   if((toneMap||grader)&&typeof OffscreenCanvas!=='undefined'){
     // drawing an HDR frame onto a normal (sRGB) canvas makes the browser tone-map it to SDR; the look is then applied on the GPU
-    let ctx=null;const gp={...vs.grade.p};
+    let ctx=null;const gp=lookActive()?{...vs.grade.p}:{...ZERO};
     video.process=sample=>{
       const w=sample.displayWidth,h=sample.displayHeight;
       if(!ctx||ctx.canvas.width!==w||ctx.canvas.height!==h){ctx=new OffscreenCanvas(w,h).getContext('2d',{colorSpace:'srgb',alpha:false});}
       sample.draw(ctx,0,0);
-      return grader?grader.render(ctx.canvas,w,h,gp):ctx.canvas;
+      return grader?grader.render(ctx.canvas,w,h,gp,gWB):ctx.canvas;
     };
   }
   const acodec=cont==='webm'?'opus':'aac';
@@ -814,7 +827,7 @@ async function vConvertOne(it,fromAll){
   if(vs.cbr)tries.push({cbr:false,fps:p.fps,note:'המכשיר לא תומך בקצב קבוע, נעשה שימוש בקצב משתנה'});
   if(!p.fps&&it.fps>61)tries.push({cbr:false,fps:60,note:'המכשיר לא הצליח לקודד '+Math.round(it.fps)+'fps, ירדתי ל-60'});
   if(Math.min(p.ow,p.oh)>1080&&(p.fps||it.fps||30)>31)tries.push({cbr:false,fps:30,note:'המכשיר לא הצליח לקודד 4K ב-60 פריימים, ירדתי ל-30'});
-  if(gradeActive())tries.push({cbr:false,fps:p.fps||(it.fps>61?60:null),grade:false,note:'עיבוד הצבע לא הצליח במכשיר הזה, הסרטון כווץ בלי שינוי צבע'});
+  if(gradeActive(it))tries.push({cbr:false,fps:p.fps||(it.fps>61?60:null),grade:false,note:'עיבוד הצבע לא הצליח במכשיר הזה, הסרטון כווץ בלי שינוי צבע'});
   if(it.hdr&&vs.sdr!==false)tries.push({cbr:false,fps:p.fps||(it.fps>61?60:null),sdr:false,note:'המרת HDR ל-SDR לא הצליחה במכשיר הזה, הסרטון כווץ בלי המרה'});
   let lastErr=null;
   for(const t of tries){
@@ -1100,17 +1113,19 @@ $('#aZipAll').addEventListener('click',async()=>{
 const SLIDERS=[
   {k:'exposure',  label:'חשיפה',          min:-1,   max:1,  step:0.05},
   {k:'contrast',  label:'ניגודיות',        min:-0.5, max:0.6,step:0.01},
+  {k:'mids',      label:'טונים אמצעיים',   min:-1,   max:1,  step:0.02},
   {k:'highlights',label:'אורות',          min:-1,   max:1,  step:0.02},
   {k:'shadows',   label:'צללים',          min:-1,   max:1,  step:0.02},
   {k:'saturation',label:'רוויה',          min:-1,   max:0.8,step:0.02},
   {k:'warmth',    label:'חום צבע',         min:-1,   max:1,  step:0.02},
+  {k:'tint',      label:'גוון (ירוק / ורוד)',min:-1,  max:1,  step:0.02},
   {k:'clarity',   label:'בהירות מקומית',   min:0,    max:1,  step:0.02},
   {k:'sharpen',   label:'חדות',           min:0,    max:1,  step:0.02}
 ];
-const ZERO={exposure:0,contrast:0,highlights:0,shadows:0,saturation:0,warmth:0,clarity:0,sharpen:0,fade:0,split:0,vibrance:0};
+const ZERO={exposure:0,mids:0,contrast:0,highlights:0,shadows:0,saturation:0,warmth:0,tint:0,clarity:0,sharpen:0,fade:0,split:0,vibrance:0};
 const LOOKS={
   none:   {},
-  vivid:  {contrast:0.24,highlights:-0.4,shadows:0.2,saturation:0.18,vibrance:0.3,clarity:0.38,sharpen:0.22},
+  vivid:  {mids:-0.6,contrast:0.12,highlights:0.12,shadows:0.15,saturation:0.04,vibrance:0.22,clarity:0.35,sharpen:0.2},
   natural:{contrast:0.06,highlights:-0.15,shadows:0.08,saturation:0.04,vibrance:0.1,clarity:0.12,sharpen:0.15},
   cine:   {contrast:0.1,highlights:-0.25,shadows:0.05,saturation:-0.08,warmth:0.06,fade:0.05,split:0.55,clarity:0.15,sharpen:0.12},
   warm:   {contrast:0.06,highlights:-0.1,warmth:0.35,saturation:0.08,vibrance:0.1,sharpen:0.12},
@@ -1118,26 +1133,32 @@ const LOOKS={
 };
 const LOOK_NAMES={none:'ללא',vivid:'אייפון חי',natural:'טבעי',cine:'קולנועי',warm:'חם',bw:'שחור־לבן',custom:'מותאם'};
 if(!vs.grade)vs.grade={look:'none',p:{...ZERO}};
+if(vs.grade.autoWB===undefined)vs.grade.autoWB=true;
 vs.grade.p={...ZERO,...vs.grade.p};
-const gradeActive=()=>vs.grade.look!=='none'&&Object.keys(ZERO).some(k=>Math.abs(vs.grade.p[k])>1e-4);
+const lookActive=()=>vs.grade.look!=='none'&&Object.keys(ZERO).some(k=>Math.abs(vs.grade.p[k])>1e-4);
+const wbOn=it=>!!(vs.grade.autoWB&&it&&it.wb&&it.wb.some(g=>Math.abs(g-1)>0.01));
+const gradeActive=it=>lookActive()||(it?wbOn(it):vs.grade.autoWB);
 
 const FRAG=`#version 300 es
 precision highp float;
 uniform sampler2D u_tex; uniform vec2 u_px;
-uniform float u_exp,u_con,u_hi,u_sh,u_sat,u_vib,u_warm,u_cla,u_shp,u_fade,u_split;
+uniform float u_exp,u_mid,u_con,u_hi,u_sh,u_sat,u_vib,u_warm,u_tint,u_cla,u_shp,u_fade,u_split;
+uniform vec3 u_wb;
 in vec2 v_uv; out vec4 o;
 float luma(vec3 c){return dot(c,vec3(0.2126,0.7152,0.0722));}
 void main(){
-  vec3 c=texture(u_tex,v_uv).rgb;
+  vec3 c=texture(u_tex,v_uv).rgb*u_wb;
   // local averages: small ring for sharpening, wide ring for clarity
   vec3 s1=vec3(0.0),s2=vec3(0.0);
   for(int i=0;i<8;i++){float a=float(i)*0.785398;vec2 d=vec2(cos(a),sin(a));
-    s1+=texture(u_tex,v_uv+d*u_px*1.2).rgb; s2+=texture(u_tex,v_uv+d*u_px*9.0).rgb+texture(u_tex,v_uv+d*u_px*18.0).rgb;}
-  s1/=8.0; s2/=16.0;
+    s1+=texture(u_tex,v_uv+d*u_px*1.2).rgb; s2+=texture(u_tex,v_uv+d*u_px*4.0).rgb+texture(u_tex,v_uv+d*u_px*8.0).rgb;}
+  s1=s1/8.0*u_wb; s2=s2/16.0*u_wb;
   c+= (c-s1)*u_shp*1.6;
   float l=luma(c), mid=1.0-abs(l*2.0-1.0);
-  c+= (c-s2)*u_cla*1.1*mid;
+  c+= clamp((c-s2)*u_cla*1.3,-0.06,0.06)*mid; // capped so edges don't glow
   c*=exp2(u_exp);
+  // mid-tones: darker or brighter middle, black and white stay put
+  c=pow(max(c,vec3(0.0)),vec3(exp2(-u_mid*0.45)));
   l=luma(c);
   // shadows / highlights: masked lifts and pulls
   float shM=1.0-smoothstep(0.0,0.55,l), hiM=smoothstep(0.45,1.0,l);
@@ -1148,15 +1169,23 @@ void main(){
   // contrast as an S-curve around mid grey
   vec3 sc=c*c*(3.0-2.0*c);
   c=u_con>=0.0? mix(c,sc,clamp(u_con*1.6,0.0,1.0)) : mix(c,vec3(0.5),-u_con*0.6);
-  // warmth
-  c+=vec3(0.06,0.015,-0.07)*u_warm;
+  // warmth, kept off faces and whites so they don't turn orange
+  l=luma(c);
+  float cb=-0.1146*c.r-0.3854*c.g+0.5*c.b, cr=0.5*c.r-0.4542*c.g-0.0458*c.b;
+  float skin=smoothstep(0.02,0.05,cr)*(1.0-smoothstep(0.13,0.18,cr))*smoothstep(-0.16,-0.12,cb)*(1.0-smoothstep(-0.01,0.03,cb));
+  float wht=smoothstep(0.65,0.92,l)*(1.0-smoothstep(0.04,0.12,max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b))));
+  float wk=u_warm>0.0? u_warm*(1.0-0.75*skin)*(1.0-0.7*wht) : u_warm;
+  c+=vec3(0.06,0.015,-0.07)*wk;
+  c+=vec3(0.03,-0.045,0.03)*u_tint;
   // split tone: teal shadows, orange highlights
   l=luma(c);
   c+=u_split*0.11*(mix(vec3(-0.6,0.15,0.45),vec3(0.55,0.15,-0.5),smoothstep(0.2,0.8,l)));
   // saturation + vibrance
   l=luma(c);
   float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b)),sat=mx-mn;
-  c=mix(vec3(l),c,1.0+u_sat+u_vib*(1.0-clamp(sat*1.6,0.0,1.0)));
+  float boost=u_sat+u_vib*(1.0-clamp(sat*1.6,0.0,1.0));
+  if(boost>0.0)boost*=(1.0-0.5*skin)*(1.0-0.6*wht); // keep faces and whites from going orange
+  c=mix(vec3(l),c,1.0+boost);
   // fade (lifted blacks)
   c=c*(1.0-u_fade)+u_fade*0.6*vec3(0.22,0.24,0.26)/0.24*0.24;
   o=vec4(clamp(c,0.0,1.0),1.0);
@@ -1179,9 +1208,9 @@ class Grader{
     this.tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,this.tex);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-    this.u={};['u_tex','u_px','u_exp','u_con','u_hi','u_sh','u_sat','u_vib','u_warm','u_cla','u_shp','u_fade','u_split'].forEach(n=>this.u[n]=gl.getUniformLocation(pr,n));
+    this.u={};['u_tex','u_px','u_exp','u_mid','u_con','u_hi','u_sh','u_sat','u_vib','u_warm','u_tint','u_cla','u_shp','u_fade','u_split','u_wb'].forEach(n=>this.u[n]=gl.getUniformLocation(pr,n));
   }
-  render(src,w,h,p){
+  render(src,w,h,p,wb){
     const gl=this.gl;
     if(this.cv.width!==w||this.cv.height!==h){this.cv.width=w;this.cv.height=h;}
     gl.viewport(0,0,w,h);
@@ -1189,12 +1218,50 @@ class Grader{
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);
     const u=this.u;
     gl.uniform1i(u.u_tex,0);gl.uniform2f(u.u_px,1/w,1/h);
-    gl.uniform1f(u.u_exp,p.exposure);gl.uniform1f(u.u_con,p.contrast);gl.uniform1f(u.u_hi,p.highlights);gl.uniform1f(u.u_sh,p.shadows);
-    gl.uniform1f(u.u_sat,p.saturation);gl.uniform1f(u.u_vib,p.vibrance||0);gl.uniform1f(u.u_warm,p.warmth);gl.uniform1f(u.u_cla,p.clarity);
+    gl.uniform1f(u.u_exp,p.exposure);gl.uniform1f(u.u_mid,p.mids||0);gl.uniform1f(u.u_con,p.contrast);gl.uniform1f(u.u_hi,p.highlights);gl.uniform1f(u.u_sh,p.shadows);
+    gl.uniform1f(u.u_sat,p.saturation);gl.uniform1f(u.u_vib,p.vibrance||0);gl.uniform1f(u.u_warm,p.warmth);gl.uniform1f(u.u_tint,p.tint||0);const g=wb||[1,1,1];gl.uniform3f(u.u_wb,g[0],g[1],g[2]);gl.uniform1f(u.u_cla,p.clarity);
     gl.uniform1f(u.u_shp,p.sharpen);gl.uniform1f(u.u_fade,p.fade||0);gl.uniform1f(u.u_split,p.split||0);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     return this.cv;
   }
+}
+/* Auto white balance: find bright, nearly-neutral areas (white shirts, walls, sky glare) and
+   make them neutral again. Falls back to a gentle grey-world estimate when nothing is white. */
+function estimateWB(canvas){
+  const W=160,H=Math.max(1,Math.round(160*canvas.height/canvas.width));
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(canvas,0,0,W,H);const d=x.getImageData(0,0,W,H).data;
+  const cand=[];let gr=0,gg=0,gb=0,gn=0;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255,l=0.2126*r+0.7152*g+0.0722*b,mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+    if(mx>0.985)continue; // clipped pixels carry no colour information
+    if(l>0.5&&(mx-mn)<0.22*mx)cand.push([l,r,g,b]);
+    if(l>0.15&&l<0.85){gr+=r;gg+=g;gb+=b;gn++;}
+  }
+  let R,G,B,strength;
+  if(cand.length>W*H*0.004){
+    cand.sort((a,b)=>b[0]-a[0]);const n=Math.max(8,Math.round(cand.length*0.3));R=G=B=0;
+    for(let i=0;i<n;i++){R+=cand[i][1];G+=cand[i][2];B+=cand[i][3];}
+    strength=0.85;
+  }else if(gn){R=gr;G=gg;B=gb;strength=0.35;}else return [1,1,1];
+  const m=(R+G+B)/3;
+  return [R,G,B].map(v=>{const g=Math.min(1.3,Math.max(0.77,m/Math.max(1e-6,v)));return 1+(g-1)*strength;});
+}
+async function ensureWB(it){
+  if(it.wb||!MB)return it.wb;
+  try{
+    const inp=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
+    const sc=Math.min(1,320/Math.max(it.w,it.h));
+    const sink=new MB.CanvasSink(await inp.getPrimaryVideoTrack(),{width:Math.max(2,Math.round(it.w*sc)),height:Math.max(2,Math.round(it.h*sc)),fit:'fill'});
+    const acc=[0,0,0];let n=0;
+    for(const f of [0.2,0.5,0.8]){
+      const res=await sink.getCanvas(Math.max(0,it.dur*f));if(!res)continue;
+      const g=estimateWB(res.canvas);acc[0]+=g[0];acc[1]+=g[1];acc[2]+=g[2];n++;
+    }
+    if(inp.dispose)inp.dispose();
+    it.wb=n?acc.map(v=>v/n):[1,1,1];
+  }catch(e){it.wb=[1,1,1];}
+  return it.wb;
 }
 let previewGrader=null;
 function getPreviewGrader(){if(previewGrader===false)return null;try{previewGrader=previewGrader||new Grader();}catch(e){previewGrader=false;}return previewGrader||null;}
@@ -1202,6 +1269,7 @@ function getPreviewGrader(){if(previewGrader===false)return null;try{previewGrad
 /* ---------- controls ---------- */
 function gSync(){
   document.querySelectorAll('#looks button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.look===vs.grade.look));
+  $('#gAutoWB').checked=!!vs.grade.autoWB;
   SLIDERS.forEach(d=>{const el=$('#g-'+d.k);if(!el)return;el.value=vs.grade.p[d.k];$('#go-'+d.k).textContent=fmtSl(vs.grade.p[d.k]);});
   const anyHdr=vItems.some(i=>i.hdr);
   $('#gNote').textContent=getPreviewGrader()===null?'הדפדפן הזה לא תומך בעיבוד צבע. הסרטון יכווץ בלי שינוי צבע.'
@@ -1213,6 +1281,7 @@ $('#gSliders').innerHTML=SLIDERS.map(d=>`<div class="sl"><label for="g-${d.k}">$
 SLIDERS.forEach(d=>$('#g-'+d.k).addEventListener('input',e=>{vs.grade.p[d.k]=+e.target.value;vs.grade.look='custom';if(Object.keys(ZERO).every(k=>Math.abs(vs.grade.p[k])<1e-4))vs.grade.look='none';gSync();gChanged();}));
 document.querySelectorAll('#looks button').forEach(b=>b.addEventListener('click',()=>{vs.grade.look=b.dataset.look;vs.grade.p={...ZERO,...LOOKS[b.dataset.look]};gSync();gChanged();}));
 $('#gReset').addEventListener('click',()=>{vs.grade.look='none';vs.grade.p={...ZERO};gSync();gChanged();});
+$('#gAutoWB').addEventListener('change',e=>{vs.grade.autoWB=e.target.checked;gSync();gChanged();});
 let gTimer=null;
 function gChanged(){pvRender();clearTimeout(gTimer);gTimer=setTimeout(()=>vChanged(),250);}
 
@@ -1228,7 +1297,8 @@ function pvRefreshList(){
   sel.hidden=list.length<2;
   $('#pvTimeRow').hidden=!pv.item;$('#pvEmpty').hidden=!!pv.item;$('#pvLine').hidden=!pv.item;
   if(pv.item&&!pv.frame)pvLoad();
-  if(!pv.item){pv.frame=null;const c=$('#pvCanvas');c.getContext('2d').clearRect(0,0,c.width,c.height);}
+  if(!pv.item){pv.frame=null;const c=$('#pvCanvas');c.getContext('2d').clearRect(0,0,c.width,c.height);const v=$('#pvVideo');v.removeAttribute('src');delete v.dataset.id;}
+  pvSyncMode();
   gSync();
 }
 $('#pvWhich').addEventListener('change',e=>{pv.item=vItems.find(i=>i.id===+e.target.value)||null;pv.frame=null;pvLoad();});
@@ -1241,22 +1311,41 @@ async function pvLoad(){
   if(pv.busy){pv.want=true;return;}
   pv.busy=true;
   try{
-    if(!it.pvInput){it.pvInput=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});it.pvSink=new MB.VideoSampleSink(await it.pvInput.getPrimaryVideoTrack());}
-    const sample=await it.pvSink.getSample(Math.max(0,Math.min(t,it.dur-0.05)));
-    if(sample&&pv.item===it){
-      const max=960,sc=Math.min(1,max/Math.max(sample.displayWidth,sample.displayHeight));
-      const w=Math.max(2,Math.round(sample.displayWidth*sc)),h=Math.max(2,Math.round(sample.displayHeight*sc));
-      const c=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
-      const x=c.getContext('2d',{colorSpace:'srgb',alpha:false});
-      x.drawImage(sample.toCanvasImageSource(),0,0,w,h); // HDR frames come out tone-mapped here, same as in the export
-      pv.frame=c;pv.fw=w;pv.fh=h;
+    const sc=Math.min(1,960/Math.max(it.w,it.h)),w=Math.max(2,Math.round(it.w*sc)),h=Math.max(2,Math.round(it.h*sc));
+    if(!it.pvInput){
+      it.pvInput=new MB.Input({formats:MB.ALL_FORMATS,source:new MB.BlobSource(it.file)});
+      // the canvas reader applies the clip's rotation itself, so portrait iPhone clips stay upright
+      it.pvSink=new MB.CanvasSink(await it.pvInput.getPrimaryVideoTrack(),{width:w,height:h,fit:'fill'});
     }
-    if(sample&&sample.close)sample.close();
+    const res=await it.pvSink.getCanvas(Math.max(0,Math.min(t,it.dur-0.05)));
+    if(res&&pv.item===it){
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d',{colorSpace:'srgb',alpha:false}).drawImage(res.canvas,0,0,w,h); // HDR comes out tone-mapped here, as in the export
+      pv.frame=c;pv.fw=w;pv.fh=h;
+      pvSyncVideo(t);
+      if(!it.wb&&vs.grade.autoWB){ensureWB(it).then(()=>{pvRender();vUpdateRow(it);});}
+    }
   }catch(e){}
   pv.busy=false;
   if(pv.want){pv.want=null;return pvLoad();}
   pvRender();
 }
+let pvModePref='hdr';
+function pvMode(){return pv.item&&pv.item.hdr?pvModePref:'sdr';}
+function pvSyncMode(){
+  const show=!!(pv.item&&pv.item.hdr);$('#pvModeRow').hidden=!show;
+  document.querySelectorAll('#pvModeRow button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===pvMode()));
+  const v=$('#pvVideo');v.hidden=pvMode()!=='hdr';
+  $('#pvBeforeLbl').textContent=pvMode()==='hdr'?'מקור HDR':'לפני';
+}
+function pvSyncVideo(t){
+  const v=$('#pvVideo'),it=pv.item;pvSyncMode();
+  if(!it||pvMode()!=='hdr')return;
+  if(v.dataset.id!==String(it.id)){v.src=it.url;v.dataset.id=it.id;}
+  const seek=()=>{try{v.currentTime=Math.max(0,Math.min(t,(it.dur||1)-0.05));}catch(e){}};
+  if(v.readyState>=1)seek();else v.addEventListener('loadedmetadata',seek,{once:true});
+}
+document.querySelectorAll('#pvModeRow button').forEach(b=>b.addEventListener('click',()=>{pvModePref=b.dataset.m;pvSyncVideo(pv.item?pv.item.dur*$('#pvTime').value/1000:0);pvRender();}));
 let pvRaf=0;
 function pvRender(){cancelAnimationFrame(pvRaf);pvRaf=requestAnimationFrame(pvDraw);}
 function pvDraw(){
@@ -1264,14 +1353,15 @@ function pvDraw(){
   if(c.width!==pv.fw||c.height!==pv.fh){c.width=pv.fw;c.height=pv.fh;}
   $('#pvStage').style.aspectRatio=pv.fw+'/'+pv.fh;
   const x=c.getContext('2d');
-  x.drawImage(pv.frame,0,0);
-  const g=getPreviewGrader();
-  if(g&&vs.grade.look!=='none'){
-    const out=g.render(pv.frame,pv.fw,pv.fh,vs.grade.p);
-    // "after" fills the part left of the line, "before" stays on the right
-    const split=Math.round(pv.fw*$('#pvSplit').value/100);
-    x.drawImage(out,0,0,split,pv.fh,0,0,split,pv.fh);
-  }
+  const it=pv.item,hdrMode=pvMode()==='hdr';
+  const split=Math.round(pv.fw*$('#pvSplit').value/100);
+  x.clearRect(0,0,pv.fw,pv.fh);
+  // right of the line: "before". In HDR mode the canvas stays clear there so the real video shows through.
+  if(!hdrMode)x.drawImage(pv.frame,0,0);
+  // left of the line: "after" = SDR conversion + white balance + look
+  const g=getPreviewGrader(),useWB=wbOn(it);
+  const src=(g&&(lookActive()||useWB))?g.render(pv.frame,pv.fw,pv.fh,lookActive()?vs.grade.p:ZERO,useWB?it.wb:null):pv.frame;
+  x.drawImage(src,0,0,split,pv.fh,0,0,split,pv.fh);
 }
 
 /* ---------- start ---------- */
