@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ממיר מדיה</title>
-<meta name="theme-color" content="#0E6F68">
+<meta name="theme-color" content="#0F5A53">
+<meta name="color-scheme" content="dark">
 <meta name="description" content="מכווץ וידאו לוואטסאפ וממיר אודיו ל-MP3 ו-WAV, ישירות בדפדפן בלי העלאה לשרת">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -15,38 +16,26 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Secular+One&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 <style>
-/* Layout: green masthead band with tab switch, then white cards on a mint ground; a fixed action bar at the bottom */
+/* Layout: deep green masthead band with tab switch, then dark cards on a near-black green ground; a fixed action bar at the bottom.
+   The app is always dark, whatever the phone's light/dark setting. */
 :root{
-  --bg:#E4EFEB; --surface:#FFFFFF; --surface-2:#F2F8F6; --ink:#14201E; --muted:#566864; --line:#D2E0DB;
-  --accent:#0E6F68; --accent-soft:#D4ECE6; --accent-ink:#FFFFFF;
-  --band:#0E6F68; --band-2:#0B5B55; --band-ink:#FFFFFF;
-  --level:#D08C00; --level-soft:#FBEFD0; --good:#1E7A44; --good-soft:#DCF1E3; --bad:#B42318; --bad-soft:#FBE3E0;
-  --wave:#9FB3AE;
+  --bg:#0E1514; --surface:#18211F; --surface-2:#1D2826; --ink:#E4ECEA; --muted:#93A29F; --line:#2A3734;
+  --accent:#3BB5A7; --accent-soft:#183834; --accent-ink:#04201C;
+  --band:#0F5A53; --band-2:#0B4540; --band-ink:#EAF6F3;
+  --level:#EDB03A; --level-soft:#3A2E12; --good:#4FBF7E; --good-soft:#163323; --bad:#F2796B; --bad-soft:#3B1915;
+  --wave:#4D5C59;
   --display:"Secular One","Assistant",system-ui,sans-serif;
   --body:"Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   --r:14px;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0E1514; --surface:#18211F; --surface-2:#1D2826; --ink:#E4ECEA; --muted:#93A29F; --line:#2A3734;
-  --accent:#3BB5A7; --accent-soft:#183834; --accent-ink:#04201C;
-  --band:#11433F; --band-2:#0D3532; --band-ink:#EAF6F3;
-  --level:#EDB03A; --level-soft:#3A2E12; --good:#4FBF7E; --good-soft:#163323; --bad:#F2796B; --bad-soft:#3B1915;
-  --wave:#4D5C59; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0E1514; --surface:#18211F; --surface-2:#1D2826; --ink:#E4ECEA; --muted:#93A29F; --line:#2A3734;
-  --accent:#3BB5A7; --accent-soft:#183834; --accent-ink:#04201C;
-  --band:#11433F; --band-2:#0D3532; --band-ink:#EAF6F3;
-  --level:#EDB03A; --level-soft:#3A2E12; --good:#4FBF7E; --good-soft:#163323; --bad:#F2796B; --bad-soft:#3B1915;
-  --wave:#4D5C59; color-scheme:dark}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .tabs button,.preset,.seg label,.pick-alt,.drop{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 [hidden]{display:none!important}
 /* screen change: each screen has its own masthead tint and slides in */
-body[data-screen="audio"]{--band:#2E6B3F;--band-2:#1F5231}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}}
-:root[data-theme="dark"] body[data-screen="audio"]{--band:#1C4527;--band-2:#14351E}
+body[data-screen="audio"]{--band:#1F5A33;--band-2:#16452A}
 @keyframes inFromLeft{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes inFromRight{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 main.enter-l{animation:inFromLeft .28s ease both}
@@ -173,11 +162,17 @@ ul.tracks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .row audio,.row .outvid{grid-area:player;width:100%;margin-top:6px;border-radius:10px}
 .row audio{height:36px}
 .trim{grid-area:edit;display:flex;flex-direction:column;gap:8px;margin-top:6px;padding:10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
-.trim-wave{position:relative;height:72px;border-radius:8px;overflow:hidden;background:var(--surface);touch-action:none;cursor:ew-resize}
+.trim-wave{position:relative;height:88px;border-radius:8px;overflow:hidden;background:var(--surface);touch-action:none;cursor:ew-resize}
 .trim-wave canvas{width:100%;height:100%;display:block}
 .trim-h{position:absolute;top:0;bottom:0;width:3px;background:var(--level);transform:translateX(-50%);pointer-events:none}
 .trim-h::after{content:"";position:absolute;top:50%;left:50%;width:14px;height:26px;border-radius:5px;background:var(--level);transform:translate(-50%,-50%);box-shadow:0 1px 3px rgba(0,0,0,.3)}
-.trim-ph{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.7;pointer-events:none}
+.trim-ph{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);transform:translateX(-50%);pointer-events:none}
+.trim-ph::before{content:"";position:absolute;top:-1px;left:50%;width:12px;height:12px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
+.trim-transport{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.trim-transport button{min-width:44px;height:40px;padding:0 10px;font-size:15px;border-radius:12px}
+.trim-transport .tp-play{min-width:60px;height:46px;font-size:18px;border-radius:999px}
+.trim-transport .tp-time{font-family:var(--mono);font-size:13px;color:var(--muted);min-width:120px;text-align:center}
+.trim-set{justify-content:center}
 .trim-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .trim-row .nud{display:inline-flex;align-items:center;gap:6px}
 .trim-row .lbl{font-size:12px;font-weight:700;color:var(--muted);min-width:42px}
@@ -529,8 +524,8 @@ function cssVar(n){return getComputedStyle(document.documentElement).getProperty
 /* ---------- tabs ---------- */
 let curScreen=null;
 const SCREENS={
-  video:  {i:0,pane:'#pane-video',  bar:'#vBar',drop:'#vDrop',color:'#0E6F68',sub:'כיווץ וידאו לוואטסאפ'},
-  audio:  {i:1,pane:'#pane-audio',  bar:'#aBar',drop:'#aDrop',color:'#2E6B3F',sub:'המרת אודיו וחילוץ שמע'}
+  video:  {i:0,pane:'#pane-video',  bar:'#vBar',drop:'#vDrop',color:'#0F5A53',sub:'כיווץ וידאו לוואטסאפ'},
+  audio:  {i:1,pane:'#pane-audio',  bar:'#aBar',drop:'#aDrop',color:'#1F5A33',sub:'המרת אודיו וחילוץ שמע'}
 };
 function showTab(name){
   if(name==='extract')name='audio';
@@ -1007,7 +1002,7 @@ $('#aClear').addEventListener('click',()=>{[...aItems].forEach(aRemove);});
    ===================================================== */
 const trimLen=it=>it.buffer?Math.max(0,(it.trim?it.trim.e:it.buffer.duration)-(it.trim?it.trim.s:0)):0;
 const isTrimmed=it=>!!(it.trim&&it.buffer&&(it.trim.s>0.005||it.trim.e<it.buffer.duration-0.005||it.trim.fi>0||it.trim.fo>0));
-function fmtT(t){const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(2);}
+function fmtT(t){t=Math.round(Math.max(0,t)*100)/100;const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(2);}
 function trimmedBuffer(it){
   const b=it.buffer;if(!isTrimmed(it))return b;
   const sr=b.sampleRate,a=Math.max(0,Math.floor(it.trim.s*sr)),z=Math.min(b.length,Math.ceil(it.trim.e*sr)),n=Math.max(1,z-a);
@@ -1022,7 +1017,9 @@ function trimmedBuffer(it){
   return out;
 }
 let trimPlay=null;
-function trimStop(){if(trimPlay){try{trimPlay.src.stop();}catch(e){}cancelAnimationFrame(trimPlay.raf);const it=trimPlay.it;trimPlay=null;const r=aRows.get(it.id);if(r&&r.trimUI)r.trimUI.sync();}}
+function trimNow(){return trimPlay?Math.min(trimPlay.to,trimPlay.from+(getCtx().currentTime-trimPlay.t0)):0;}
+function trimStop(){if(trimPlay){const tp=trimPlay;trimPlay=null;try{tp.src.onended=null;tp.src.stop();}catch(e){}cancelAnimationFrame(tp.raf);
+  const it=tp.it;if(it.trim)it.trim.pos=Math.min(tp.to,tp.from+(getCtx().currentTime-tp.t0));const r=aRows.get(it.id);if(r&&r.trimUI)r.trimUI.sync();}}
 function trimChanged(it){
   if(it.status==='done'){aDropOut(it);it.status='ready';}
   aUpdateRow(it);aSum();
@@ -1035,62 +1032,98 @@ function toggleTrim(it){
 }
 function buildTrim(it,box){
   const dur=it.buffer.duration;
-  if(!it.trim)it.trim={s:0,e:dur,fi:0,fo:0};
-  box.innerHTML=`<div class="trim-wave"><canvas></canvas><div class="trim-h" data-h="s"></div><div class="trim-h" data-h="e"></div><div class="trim-ph" hidden></div></div>
+  if(!it.trim)it.trim={s:0,e:dur,fi:0,fo:0,pos:0};
+  const T=it.trim;if(T.pos===undefined)T.pos=T.s;
+  box.innerHTML=`<div class="trim-wave"><canvas></canvas><div class="trim-h" data-h="s"></div><div class="trim-h" data-h="e"></div><div class="trim-ph"></div></div>
+    <div class="trim-transport" dir="ltr">
+      <button type="button" data-a="tostart" aria-label="לתחילת הקטע">⏮</button>
+      <button type="button" data-a="back" aria-label="5 שניות אחורה">−5</button>
+      <button type="button" class="primary tp-play" data-a="play" aria-label="נגן">▶</button>
+      <button type="button" data-a="fwd" aria-label="5 שניות קדימה">+5</button>
+      <button type="button" data-a="nearend" aria-label="3 שניות לפני הסוף">⏭</button>
+      <output class="tp-time" data-o="pos"></output>
+    </div>
+    <div class="trim-row trim-set"><button type="button" data-a="setS">קבע התחלה כאן</button><button type="button" data-a="setE">קבע סוף כאן</button><button type="button" class="ghost" data-a="reset">איפוס</button></div>
     <div class="trim-row"><span class="lbl">התחלה</span><span class="nud" dir="ltr"><button type="button" data-n="s" data-d="-0.1" aria-label="התחלה מוקדם יותר ב-0.1 שנייה">−0.1</button><output data-o="s"></output><button type="button" data-n="s" data-d="0.1" aria-label="התחלה מאוחר יותר ב-0.1 שנייה">+0.1</button></span>
       <select data-f="fi" aria-label="הגברה הדרגתית בהתחלה"><option value="0">בלי הגברה</option><option value="0.5">הגברה 0.5 ש׳</option><option value="1">הגברה 1 ש׳</option><option value="2">הגברה 2 ש׳</option><option value="3">הגברה 3 ש׳</option></select></div>
     <div class="trim-row"><span class="lbl">סוף</span><span class="nud" dir="ltr"><button type="button" data-n="e" data-d="-0.1" aria-label="סוף מוקדם יותר ב-0.1 שנייה">−0.1</button><output data-o="e"></output><button type="button" data-n="e" data-d="0.1" aria-label="סוף מאוחר יותר ב-0.1 שנייה">+0.1</button></span>
       <select data-f="fo" aria-label="דעיכה הדרגתית בסוף"><option value="0">בלי דעיכה</option><option value="0.5">דעיכה 0.5 ש׳</option><option value="1">דעיכה 1 ש׳</option><option value="2">דעיכה 2 ש׳</option><option value="3">דעיכה 3 ש׳</option></select></div>
-    <div class="trim-foot"><span class="len">אורך הקטע: <b data-o="len"></b></span>
-      <span class="trim-row"><button type="button" class="primary" data-a="play">▶ נגן קטע</button><button type="button" data-a="end">נגן 3 ש׳ אחרונות</button><button type="button" class="ghost" data-a="reset">איפוס</button></span></div>`;
+    <div class="trim-foot"><span class="len">אורך הקטע: <b data-o="len"></b></span><span class="len">גרור את הידיות הכתומות לחיתוך, או גע בגל כדי לקפוץ</span></div>`;
   const wave=box.querySelector('.trim-wave'),cv=wave.querySelector('canvas'),hs=wave.querySelector('[data-h=s]'),he=wave.querySelector('[data-h=e]'),ph=wave.querySelector('.trim-ph');
   const pk=peaks(it.buffer,300);
-  const T=it.trim;
+  const playing=()=>!!(trimPlay&&trimPlay.it===it);
+  const curPos=()=>playing()?trimNow():T.pos;
   // the timeline runs left to right (start on the left), like every audio editor
   function draw(){
     const dpr=window.devicePixelRatio||1,w=cv.clientWidth||300,h=cv.clientHeight||72;
     cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);g.clearRect(0,0,w,h);
-    const n=pk.length,bw=w/n,acc=cssVar('--accent'),mut=cssVar('--wave');
+    const n=pk.length,bw=w/n,acc=cssVar('--accent'),mut=cssVar('--wave'),pos=curPos();
     for(let i=0;i<n;i++){const t=(i+0.5)/n*dur,inside=t>=T.s&&t<=T.e,amp=Math.max(2,pk[i]*(h-10));
-      g.fillStyle=inside?acc:mut;g.globalAlpha=inside?0.9:0.45;g.fillRect(i*bw+0.25,(h-amp)/2,Math.max(1,bw-0.5),amp);}
+      g.fillStyle=inside?(t<=pos?cssVar('--level'):acc):mut;g.globalAlpha=inside?0.95:0.4;g.fillRect(i*bw+0.25,(h-amp)/2,Math.max(1,bw-0.5),amp);}
     g.globalAlpha=1;
     hs.style.left=(T.s/dur*100)+'%';he.style.left=(T.e/dur*100)+'%';
+  }
+  function showPos(){
+    const p=curPos();ph.style.left=(p/dur*100)+'%';
+    box.querySelector('[data-o=pos]').textContent=fmtT(p)+' / '+fmtT(dur);
   }
   function sync(){
     box.querySelector('[data-o=s]').textContent=fmtT(T.s);box.querySelector('[data-o=e]').textContent=fmtT(T.e);
     box.querySelector('[data-o=len]').textContent=fmtT(T.e-T.s);
     box.querySelector('[data-f=fi]').value=String(T.fi||0);box.querySelector('[data-f=fo]').value=String(T.fo||0);
-    const playing=trimPlay&&trimPlay.it===it;box.querySelector('[data-a=play]').textContent=playing?'■ עצור':'▶ נגן קטע';ph.hidden=!playing;
-    draw();
+    const pb=box.querySelector('[data-a=play]');pb.textContent=playing()?'❚❚':'▶';pb.setAttribute('aria-label',playing()?'השהה':'נגן');
+    draw();showPos();
   }
   function set(which,v){
     v=Math.max(0,Math.min(dur,v));
     if(which==='s')T.s=Math.min(v,T.e-0.1);else T.e=Math.max(v,T.s+0.1);
     T.s=Math.max(0,T.s);T.e=Math.min(dur,T.e);
+    const was=playing();if(was)trimStop();
     sync();trimChanged(it);
   }
-  // drag on the waveform: grabs the nearest handle
-  let drag=null;
-  const tAt=e=>{const rc=wave.getBoundingClientRect();return Math.max(0,Math.min(1,(e.clientX-rc.left)/rc.width))*dur;};
-  wave.addEventListener('pointerdown',e=>{const t=tAt(e);drag=Math.abs(t-T.s)<=Math.abs(t-T.e)?'s':'e';wave.setPointerCapture(e.pointerId);set(drag,t);});
-  wave.addEventListener('pointermove',e=>{if(drag)set(drag,tAt(e));});
-  ['pointerup','pointercancel'].forEach(ev=>wave.addEventListener(ev,()=>{drag=null;}));
-  box.querySelectorAll('button[data-n]').forEach(b=>b.addEventListener('click',()=>set(b.dataset.n,T[b.dataset.n]+(+b.dataset.d))));
-  box.querySelectorAll('select[data-f]').forEach(sel=>sel.addEventListener('change',()=>{T[sel.dataset.f]=+sel.value;sync();trimChanged(it);}));
-  box.querySelector('[data-a=reset]').addEventListener('click',()=>{T.s=0;T.e=dur;T.fi=0;T.fo=0;sync();trimChanged(it);});
-  function play(from,to){
+  function seek(t){
+    t=Math.max(0,Math.min(dur,t));
+    if(playing()){play(t);return;}
+    T.pos=t;draw();showPos();
+  }
+  function play(from){
     trimStop();
+    if(from===undefined)from=T.pos;
+    if(from<T.s||from>=T.e-0.05)from=T.s;
     const ctx=getCtx();if(ctx.state==='suspended')ctx.resume();
     const seg=trimmedBuffer(it),src=ctx.createBufferSource();src.buffer=seg;src.connect(ctx.destination);
-    const off=Math.max(0,from-T.s),len=Math.max(0.05,to-from);
-    src.start(0,off,len);const t0=ctx.currentTime;
-    trimPlay={it,src,raf:0};
-    src.onended=()=>{if(trimPlay&&trimPlay.src===src)trimStop();};
-    const tick=()=>{if(!trimPlay||trimPlay.src!==src)return;const pos=from+(ctx.currentTime-t0);ph.style.left=(pos/dur*100)+'%';trimPlay.raf=requestAnimationFrame(tick);};
-    sync();tick();
+    src.start(0,Math.max(0,from-T.s),Math.max(0.05,T.e-from));
+    trimPlay={it,src,raf:0,from,to:T.e,t0:ctx.currentTime};
+    src.onended=()=>{if(trimPlay&&trimPlay.src===src){trimStop();T.pos=T.s;sync();}};
+    let last=0;
+    const tick=ts=>{if(!trimPlay||trimPlay.src!==src)return;showPos();if(ts-last>120){draw();last=ts;}trimPlay.raf=requestAnimationFrame(tick);};
+    sync();trimPlay.raf=requestAnimationFrame(tick);
   }
-  box.querySelector('[data-a=play]').addEventListener('click',()=>{if(trimPlay&&trimPlay.it===it){trimStop();return;}play(T.s,T.e);});
-  box.querySelector('[data-a=end]').addEventListener('click',()=>play(Math.max(T.s,T.e-3),T.e));
+  function pause(){if(playing()){trimStop();}}
+  // waveform: near a handle -> move that handle; anywhere else -> move the playhead (and keep scrubbing while dragging)
+  let drag=null;
+  const tAt=e=>{const rc=wave.getBoundingClientRect();return Math.max(0,Math.min(1,(e.clientX-rc.left)/rc.width))*dur;};
+  const pxOf=t=>t/dur*wave.getBoundingClientRect().width;
+  wave.addEventListener('pointerdown',e=>{
+    const rc=wave.getBoundingClientRect(),x=e.clientX-rc.left,ds=Math.abs(x-pxOf(T.s)),de=Math.abs(x-pxOf(T.e));
+    drag=Math.min(ds,de)<=22?(ds<=de?'s':'e'):'pos';
+    wave.setPointerCapture(e.pointerId);
+    if(drag==='pos'){drag={pos:true,wasPlaying:playing()};if(playing())trimStop();T.pos=tAt(e);draw();showPos();}
+    else set(drag,tAt(e));
+  });
+  wave.addEventListener('pointermove',e=>{if(!drag)return;if(drag.pos){T.pos=tAt(e);draw();showPos();}else set(drag,tAt(e));});
+  ['pointerup','pointercancel'].forEach(ev=>wave.addEventListener(ev,()=>{if(drag&&drag.pos&&drag.wasPlaying)play(T.pos);drag=null;}));
+  box.querySelectorAll('button[data-n]').forEach(b=>b.addEventListener('click',()=>set(b.dataset.n,T[b.dataset.n]+(+b.dataset.d))));
+  box.querySelectorAll('select[data-f]').forEach(sel=>sel.addEventListener('change',()=>{T[sel.dataset.f]=+sel.value;if(playing())play(trimNow());sync();trimChanged(it);}));
+  const on=(a,f)=>box.querySelector(`[data-a=${a}]`).addEventListener('click',f);
+  on('play',()=>{playing()?pause():play();});
+  on('tostart',()=>seek(T.s));
+  on('back',()=>seek(curPos()-5));
+  on('fwd',()=>seek(curPos()+5));
+  on('nearend',()=>seek(Math.max(T.s,T.e-3)));
+  on('setS',()=>{set('s',curPos());});
+  on('setE',()=>{set('e',curPos());});
+  on('reset',()=>{T.s=0;T.e=dur;T.fi=0;T.fo=0;T.pos=0;if(playing())trimStop();sync();trimChanged(it);});
   sync();
   return {draw,sync};
 }
